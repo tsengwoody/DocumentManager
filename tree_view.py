@@ -32,7 +32,6 @@ class TreeView(wx.TreeCtrl):
         self.DeleteAllItems()
         print("data msg in tree view:", self.data)
         for index, item in enumerate( self.data ):
-            # 加入左邊 tree 的 Item 中
             childID = self.AppendItem(self.root, item.label, 0)
             self.SetPyData(childID, (item.label, index))
  

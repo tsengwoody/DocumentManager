@@ -28,13 +28,11 @@ class Model:
     def updatePanel(self, data):
         self.data['label'] = data['label']
         self.data['index'] = data['index']
-        # now tell anyone who cares that the value has been changed
         pub.sendMessage("data_changed", data=self.data)
 
     def updateItem(self, data):
         self.data['label'] = data['label']
         self.data['index'] = data['index']
-        # now tell anyone who cares that the value has been changed
         pub.sendMessage("data_changed", data=self.data)
 
 class Controller:
@@ -43,7 +41,7 @@ class Controller:
 
         self.frame = FrameView(None, title = 'math content manager', size=wx.Size(800, 400))
         self.tree = TreeView(self.frame, self.model.data)
-        self.panel = PanelView(self.frame, title=self.model.data['label'], data=self.model.data['obj'][self.model.data['index']])
+        self.panel = PanelView(self.frame, title=self.model.data['label'], data=self.model.data)
         self.frame.show(True)
 
         pub.subscribe(self.changeData, 'data_changing')
@@ -59,7 +57,4 @@ if __name__ == "__main__":
     app = wx.App()
     c = Controller()
     sys.stdout = sys.__stdout__
-
-    print('---- Starting main event loop ----')
     app.MainLoop()
-    print('---- Exited main event loop ----')

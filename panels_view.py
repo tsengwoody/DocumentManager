@@ -25,17 +25,17 @@ class PanelView(wx.Panel):
         self.type = InputType.PANEL
         self.data = data
         self.insideItems = wx.BoxSizer(wx.HORIZONTAL)
+        self.panel.SetBackgroundColour( wx.Colour( 112, 186, 248 ) )
+        self.setData(self.data)
         pub.subscribe(self.setData, "data_changed")
 
     def setData(self, data):
         print("data msg in panel view:", data)
         self.data = data
         item = self.data['obj'][self.data['index']]
-        panelItem = self.updatePanel(title=self.data['label'], content=item.contents, _type=item.type, data=item)
-        self.insideItems.Add(panelItem, 1, wx.EXPAND|wx.ALL)
-        self.panel.SetSizer(self.insideItems)
-        #self.SetBackgroundColour((80,80,80))
-        self.panel.Fit()      
+        self.panelItem = self.updatePanel(title=self.data['label'], content=item.contents, _type=item.type, data=item)
+        self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)
+        self.panelItem.SetSize(self.panel.Size)
     
     def updatePanel(self, title, content, _type, data):
         if _type == "section":
