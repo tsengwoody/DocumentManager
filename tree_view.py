@@ -13,19 +13,43 @@ class TreeView(wx.TreeCtrl):
         docBitmap = wx.Bitmap("./icons/documents.png", wx.BITMAP_TYPE_PNG)
         il.Add(docBitmap)
         self.AssignImageList(il)
-        self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.activeItem, self)
+
+        self.fileMenu = wx.Menu()
+        self.fileMenu.Append(wx.ID_ANY,  "Add folder")
+        self.fileMenu.Append(wx.ID_ANY,  "Update folder")
+        self.fileMenu.Append(wx.ID_ANY,  "Delete folder")
+        self.fileMenu.Append(wx.ID_ANY,  "Import")
+        self.fileMenu.Append(wx.ID_ANY,  "Export")
+
+        self.Bind(wx.EVT_LEFT_DOWN, self.activeItem, self)
+        self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
 
         self.root = self.AddRoot("root") 
         self.setData(data)
         pub.subscribe(self.setData, "data_changedTree")
 
-    def activeItem(self, evt):
-        item = evt.GetItem()
-        pyData = self.GetItemData(item)
-        index = pyData[1]
-        label = self.GetItemText(item)
-        pub.sendMessage("data_changing", data={'type': InputType.PANEL, 'index': index, 'label': label})
+    def activeItem(self, event):
+        item, flags = self.HitTest(event.GetPosition())
+        if item.ID is not None:
+            pyData = self.GetItemData(item)
+            index = pyData[1]
+            if index != wx.NOT_FOUND: 
+                self.SelectItem(item)       
+                label = self.GetItemText(item)
+                pub.sendMessage("data_changing", data={'type': InputType.PANEL, 'index': index, 'label': label})
 
+    def onItemRightClick(self, event):
+        item, flags = self.HitTest(event.GetPosition())
+        if item.ID is not None:
+            pyData = self.GetItemData(item)
+            index = pyData[1]
+            if index != wx.NOT_FOUND: 
+                self.SelectItem(item)
+                self.activeItem(event)
+                if self.fileMenu.Window is None:
+                    self.PopupMenu(self.fileMenu, event.GetPosition())
+                    #self.fileMenu.Destroy() # destroy to avoid mem leak
+        event.Skip()
 
     def setData(self, data):
         self.data = data['obj']
