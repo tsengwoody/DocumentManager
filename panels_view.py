@@ -33,6 +33,10 @@ class PanelView(wx.Panel):
         print("data msg in panel view:", data)
         self.data = data
         item = self.data['obj'][self.data['index']]
+        try:
+            self.panelItem.Destroy()
+        except AttributeError:
+            print("there is no created panelItem")
         self.panelItem = self.updatePanel(title=self.data['label'], content=item.contents, _type=item.type, data=item)
         self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)
         self.panelItem.SetSize(self.panel.Size)
