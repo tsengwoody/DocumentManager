@@ -17,13 +17,14 @@ useNotifyByWriteFile(sys.stdout)
 # exchange data via pubsub:
 from frame_view import FrameView
 from panels_view import PanelView
+from toolbar_view import ToolBarView
 from tree_view import TreeView
 from dm_enum import InputType
 from fakedata import documents_obj
 
 class Model:
     def __init__(self):
-        self.data = {'obj': documents_obj, 'index':0, 'label': documents_obj[0].label}
+        self.data = {'items': documents_obj, 'index':0, 'label': documents_obj[0].label}
 
     def updatePanel(self, data):
         self.data['label'] = data['label']
@@ -41,7 +42,11 @@ class Controller:
 
         self.frame = FrameView(None, title = 'math content manager', size=wx.Size(800, 400))
         self.tree = TreeView(self.frame, self.model.data)
-        self.panel = PanelView(self.frame, title=self.model.data['label'], data=self.model.data)
+        self.toolbarPanel = ToolBarView(self.frame, self.model.data)
+
+        self.rightTopPanel = PanelView(self.frame, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4, self.frame.Size.height/2), data=self.model.data)      
+  
+        self.rightBottomPanel = PanelView(self.frame, title=self.model.data['label'], pos=(self.frame.Size.width/4, self.frame.Size.height/2), size=(self.frame.Size.width*3/4, self.frame.Size.height/2), data=self.model.data, is_count_total=True)
         self.frame.show(True)
 
         pub.subscribe(self.changeData, 'data_changing')

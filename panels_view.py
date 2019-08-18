@@ -2,8 +2,9 @@ import wx
 from pubsub import pub
 
 from enums import ImageIdEnum
-from dm_enum import InputType
+from dm_enum import InputType, PanelType
 from asciimathml import parse
+from Model.documentManager import *
 
 # Debug
 import pprint
@@ -19,35 +20,44 @@ logging.basicConfig(
 
 
 class PanelView(wx.Panel):
-    def __init__(self, parent, title, data):
-        self.panel = wx.Panel(parent, wx.ID_ANY, (parent.Size.width/4, 0), (parent.Size.width*3/4, parent.Size.height/2), style = wx.BORDER_THEME | wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
+    def __init__(self, parent, title, data, pos=(200, 000), size=wx.Size(600, 200), is_count_total=False):
+        wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size, style = wx.BORDER_THEME | wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
         self.parent = parent
         self.type = InputType.PANEL
         self.data = data
+        self.is_count_total = is_count_total
         self.insideItems = wx.BoxSizer(wx.HORIZONTAL)
-        self.panel.SetBackgroundColour( wx.Colour( 112, 186, 248 ) )
+        self.SetBackgroundColour( wx.Colour( 112, 186, 248 ) )
         self.setData(self.data)
         pub.subscribe(self.setData, "data_changed")
 
     def setData(self, data):
         print("data msg in panel view:", data)
         self.data = data
-        item = self.data['obj'][self.data['index']]
+        current_item = self.data['items'][self.data['index']]
+        if self.is_count_total==True:
+            self.item = current_item
+            self.label = self.data['label']
+            self.contents = [{'type':k, 'label':v} for k, v in self.item.contents.items()] 
+        else:
+            self.item = current_item.current_section
+            self.label = current_item.label
+            self.contents = current_item.lists 
         try:
             self.panelItem.Destroy()
         except AttributeError:
             print("there is no created panelItem")
-        self.panelItem = self.updatePanel(title=self.data['label'], content=item.contents, _type=item.type, data=item)
+        self.panelItem = self.updatePanel(title=self.label, content=self.contents, _type=self.item.type, data=self.item)
         self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)
-        self.panelItem.SetSize(self.panel.Size)
+        self.panelItem.SetSize(self.Size)
     
     def updatePanel(self, title, content, _type, data):
-        if _type == "section":
-            return SectionPanel(parent=self.panel, title=title, content=content, _type=_type, data=data, eventParent=self)
-        elif _type == "text":
-            return TextPanel(parent=self.panel, title=title, content=content, _type=_type, data=data, eventParent=self)
-        elif _type == "mathml":
-            return MathmlPanel(parent=self.panel, title=title, content=content, _type=_type, data=data, eventParent=self)
+        if _type == PanelType.SECTION.value:
+            return SectionPanel(parent=self, title=title, content=content, _type=_type, data=data, eventParent=self)
+        elif _type == PanelType.TEXT.value:
+            return TextPanel(parent=self, title=title, content=content, _type=_type, data=data, eventParent=self)
+        elif _type == PanelType.MATH.value:
+            return MathmlPanel(parent=self, title=title, content=content, _type=_type, data=data, eventParent=self)
            
 
 # ==========================================================================================
@@ -94,15 +104,15 @@ class SectionPanel(wx.Panel):
         self.lst.AssignImageList(il, wx.IMAGE_LIST_NORMAL)
 
 
-        for itemIndex, countType in enumerate( ["section", "text", "mathml"] ):
-            count = self.data.counts(countType)
-            self.lst.InsertItem(itemIndex, f"{count} 個", ImageIdEnum.typeToEnum(countType))
+        for item in self.content:
+            index = self.content.index(item)
+            self.lst.InsertItem(index, f"{item['label']}", ImageIdEnum.typeToEnum(item['type']))
     
         # ==============================================================
         # SectionPanel 的按鈕們
         # ==============================================================
         self.button_panel = wx.Panel(self)
-        self.createButtonBar(self.button_panel, xPos = 0)
+        # self.createButtonBar(self.button_panel, xPos = 0)
         self.modelBindView()
 
         self.bsizer_btn = wx.BoxSizer(wx.VERTICAL)
@@ -132,14 +142,7 @@ class SectionPanel(wx.Panel):
     def modelBindView(self, newdata=None):
         # 有傳送新的data的話就更新 ItemPanel 的 data
         if newdata:
-            self.data = newdata
-
-        for itemIndex, countType in enumerate( ["section", "text", "mathml"] ):
-            count = self.data.counts(countType)
-            # 其實不用清空，只要重新設定一下圖片和個數標籤就可以了
-            # self.lst.InsertItem(itemIndex, f"{count} 個", ImageIdEnum.typeToEnum(countType))
-            self.lst.SetItem(itemIndex, 0, f"{count} 個", ImageIdEnum.typeToEnum(countType))
-        
+            self.data = newdata     
         # self.contentText.SetValue(self.content)
 
     def viewBindModel(self):

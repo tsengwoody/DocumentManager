@@ -48,11 +48,10 @@ class TreeView(wx.TreeCtrl):
                 self.activeItem(event)
                 if self.fileMenu.Window is None:
                     self.PopupMenu(self.fileMenu, event.GetPosition())
-                    #self.fileMenu.Destroy() # destroy to avoid mem leak
         event.Skip()
 
     def setData(self, data):
-        self.data = data['obj']
+        self.data = data['items']
         self.DeleteAllItems()
         print("data msg in tree view:", self.data)
         for index, item in enumerate( self.data ):
