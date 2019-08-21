@@ -44,7 +44,7 @@ class Controller:
         self.tree = TreeView(self.frame, self.model.data)
         self.toolbarPanel = ToolBarView(self.frame, self.model.data)
 
-        self.rightTopPanel = PanelView(self.frame, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4, self.frame.Size.height/2), data=self.model.data)      
+        self.rightTopPanel = PanelView(self.frame, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4, self.frame.Size.height/3), data=self.model.data)      
   
         self.rightBottomPanel = PanelView(self.frame, title=self.model.data['label'], pos=(self.frame.Size.width/4, self.frame.Size.height/2), size=(self.frame.Size.width*3/4, self.frame.Size.height/2), data=self.model.data, is_count_total=True)
         self.frame.show(True)
