@@ -4,7 +4,6 @@ from pubsub import pub
 from enums import ImageIdEnum
 from dm_enum import InputType, PanelType
 from asciimathml import parse
-from Model.documentManager import *
 
 # Debug
 import pprint
@@ -33,21 +32,34 @@ class PanelView(wx.Panel):
 
     def setData(self, data):
         print("data msg in panel view:", data)
-        self.data = data
-        current_item = self.data['items'][self.data['index']]
+        self.label = data['label']
+        self.type = data['type']
         if self.is_count_total==True:
-            self.item = current_item
-            self.label = self.data['label']
-            self.contents = [{'type':k, 'label':v} for k, v in self.item.contents.items()] 
+            if 'items' in data:
+                list_item = {}
+                for item in data['items']:
+                    if item['type'] in list_item:
+                        list_item[item['type']] = list_item[item['type']] + 1
+                    else:
+                        list_item[item['type']] = 1
+                self.contents = [{'type':k, 'label':v} for k, v in list_item.items()]
+                self.data = data
+            elif 'content' in data:
+                self.contents = data['content']
         else:
-            self.item = current_item.current_section
-            self.label = current_item.label
-            self.contents = current_item.lists 
+            if 'items' not in data:
+                return
+            self.contents = data['items']
+            if 'current_folder_layer' not in data:
+                data['current_folder_layer'] = 0
+            for idx, val in enumerate(self.contents):
+                data['items'][idx]['current_folder_layer'] = data['current_folder_layer'] + 1
+            self.data = data
         try:
             self.panelItem.Destroy()
         except AttributeError:
             print("there is no created panelItem")
-        self.panelItem = self.updatePanel(title=self.label, content=self.contents, _type=self.item.type, data=self.item)
+        self.panelItem = self.updatePanel(title=self.label, content=self.contents, _type=self.type, data=self.data)
         self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)
         self.panelItem.SetSize(self.Size)
     
@@ -128,9 +140,19 @@ class SectionPanel(wx.Panel):
         self.bsizer.Add(self.button_panel, 0, wx.EXPAND|wx.ALL)
 
         self.SetSizer(self.bsizer)
+
+        self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
         
         print(f"SectionPanel name: {self.name}")#, content: {self.content}")
 
+
+    def onSelectedItem(self, event):
+        item = event.GetItem()
+        index = item.GetId()
+        data = self.data['items'][index]
+        _type = data['type']
+        label = data['label']
+        pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': data['current_folder_layer'],'index': index, 'label': label})
 
     def onPanelActivated(self, newdata=None):
         self.modelBindView(newdata)
@@ -287,11 +309,11 @@ class TextPanel(wx.Panel):
     def modelBindView(self):
         """Model 資料放回至 View 中"""
         self.contentText.SetValue(self.content)
-        self.data.content = self.content
+        self.data['content'] = self.content
 
     def viewBindModel(self):
         self.content = self.contentText.GetValue()
-        self.data.content = self.content
+        self.data['content'] = self.content
 
     def buttonData(self):
         return (
@@ -330,7 +352,7 @@ class MathmlPanel(wx.Panel):
     def __init__(self, parent, title, content, _type, data, eventParent):
         wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
         self.name = title
-        self.content = data.content
+        self.content = content
         self.data = data
         self.type = _type
         self.buttons = []

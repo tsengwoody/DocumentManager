@@ -1,5 +1,3 @@
-from Model.documentManager import *
-
 # ============================================================================================================================================
 # 新版資料
 # ============================================================================================================================================
@@ -169,62 +167,4 @@ documents = [
 	},
 ]
 
-documents_obj = []
-for d in documents:
-	obj = RootSection.create_by_data(d)
-	documents_obj.append(obj)
-
-
-# ============================================================================================================================================
-# 舊版資料
-# ============================================================================================================================================
-
-
-data = [
-	{
-		'name': 'fraction',
-		'items': [
-			{
-				'name': 'fraction',
-				'content': '<math><mrow><mfrac><mn>3</mn><mrow><mn>1</mn><mo>+</mo><mi>x</mi></mrow></mfrac></mrow></math>',
-			},
-			{
-				'name': 'single fraction',
-				'content': '<math><mfrac><mi>3</mi><mi>4</mi></mfrac></math>',
-			},
-			{
-				'name': 'add integer fraction1',
-				'content': '<math><mn>17</mn><mfrac><mn>2</mn><mn>5</mn></mfrac></math>',
-			},
-			{
-				'name': 'add integer fraction2',
-				'content': '<math><mn>17</mn><mfrac><mn>2</mn><mn>5</mn></mfrac></math>',
-			},
-			{
-				'name': 'add integer fraction3',
-				'content': '<math><mn>17</mn><mfrac><mn>2</mn><mn>5</mn></mfrac></math>',
-			},
-		],
-	},
-	{
-		'name': 'mark',
-		'items': [
-			{
-				'name': 'sub sup',
-				'content': '<math><msubsup><mi>a</mi><mn>n</mn><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>a</mi><mn>n+1</mn><mn>2</mn></msubsup></math>',
-			},
-			{
-				'name': 'sup',
-				'content': '<math><mrow><msup><mi>x</mi><mrow><mi>a</mi><mo>+</mo><mi>b</mi></mrow></msup></mrow></math>',
-			},
-			{
-				'name': 'sub',
-				'content': '<math><msub><mi>a</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub></math>',
-			},
-		],
-	},
-]
-
-
-
-__all__ = ["data", "documents", "documents_obj"]
+__all__ = ["documents"]

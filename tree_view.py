@@ -36,7 +36,7 @@ class TreeView(wx.TreeCtrl):
             if index != wx.NOT_FOUND: 
                 self.SelectItem(item)       
                 label = self.GetItemText(item)
-                pub.sendMessage("data_changing", data={'type': InputType.PANEL, 'index': index, 'label': label})
+                pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'index': index, 'label': label, 'current_folder_layer': 0})
 
     def onItemRightClick(self, event):
         item, flags = self.HitTest(event.GetPosition())
@@ -55,6 +55,7 @@ class TreeView(wx.TreeCtrl):
         self.DeleteAllItems()
         print("data msg in tree view:", self.data)
         for index, item in enumerate( self.data ):
-            childID = self.AppendItem(self.root, item.label, 0)
-            self.SetPyData(childID, (item.label, index))
+            label = item['label']
+            childID = self.AppendItem(self.root, label, 0)
+            self.SetPyData(childID, (label, index))
  

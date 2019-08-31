@@ -20,28 +20,46 @@ from panels_view import PanelView
 from toolbar_view import ToolBarView
 from tree_view import TreeView
 from dm_enum import InputType
-from fakedata import documents_obj
+from fakedata import documents
 
 class Model:
     def __init__(self):
-        self.data = {'items': documents_obj, 'index':0, 'label': documents_obj[0].label}
-
-    def updatePanel(self, data):
-        self.data['label'] = data['label']
-        self.data['index'] = data['index']
-        pub.sendMessage("data_changed", data=self.data)
+        self.ori_data = {'items': documents}
+        self.data = {'items': documents[0]['items'], 'index':[0], 'label':documents[0]['label'], 'type':documents[0]['type']}
+        self.current_folder_layer=0
 
     def updateItem(self, data):
-        self.data['label'] = data['label']
-        self.data['index'] = data['index']
-        pub.sendMessage("data_changed", data=self.data)
+        index_array = self.data['index']
+        if 'current_folder_layer' in data:
+            self.current_folder_layer = data['current_folder_layer']
+        index_array.insert(self.current_folder_layer,data['index'])
+        del index_array[self.current_folder_layer+1:] 
+        source = self.ori_data['items']
+        path_str = ""
+        for idx, val in enumerate(index_array):
+            path_str = path_str + ('' if idx==0 else '/') + source[val]['label']
+            self.data['type'] = source[val]['type']
+            self.data['current_folder_layer'] = self.current_folder_layer
+            if 'items' in source[val]:
+                source = source[val]['items']
+                self.data['items'] = source
+            else:
+                del self.data['items']
+                self.data['content'] = source[val]['content']
+                source = []
+        self.data['index'] = index_array
+        self.data['label'] = path_str
+        current_index = data['index']
+        data = self.data.copy()
+        data['index'] = current_index
+        pub.sendMessage("data_changed", data=data)
 
 class Controller:
     def __init__(self):
         self.model = Model()
 
         self.frame = FrameView(None, title = 'math content manager', size=wx.Size(800, 400))
-        self.tree = TreeView(self.frame, self.model.data)
+        self.tree = TreeView(self.frame, self.model.ori_data)
         self.toolbarPanel = ToolBarView(self.frame, self.model.data)
 
         self.rightTopPanel = PanelView(self.frame, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4, self.frame.Size.height/3), data=self.model.data)      
@@ -52,10 +70,7 @@ class Controller:
         pub.subscribe(self.changeData, 'data_changing')
 
     def changeData(self, data):
-        if data['type'].value & InputType.PANEL.value:
-            self.model.updatePanel(data)
-        if data['type'].value & InputType.ITEM.value:
-            self.model.updateItem(data)
+        self.model.updateItem(data)
 
 
 if __name__ == "__main__":

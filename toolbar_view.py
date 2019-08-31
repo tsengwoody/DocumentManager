@@ -15,7 +15,7 @@ class ToolBarView(wx.Panel):
         self.backPathbtn.SetLabel("上一層")
         self.toolbar = wx.BoxSizer(wx.VERTICAL)
         self.toolbar.Add(self.backPathbtn, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, border=5)                   
-        self.pathText = wx.StaticText(self, -1, data['items'][data['index']].path_str, size=(-1, -1), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.BU_NOTEXT)
+        self.pathText = wx.StaticText(self, -1, data['label'], size=(-1, -1), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.BU_NOTEXT)
         self.toolbar.Add(self.pathText, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL)
         self.SetSizer(self.toolbar)
         self.Fit()
@@ -23,7 +23,7 @@ class ToolBarView(wx.Panel):
 
     def setData(self, data):
         try:
-            self.pathText.SetLabel(data['items'][data['index']].path_str)
+            self.pathText.SetLabel(data['label'])
         except AttributeError:
             print("there is no created pathText")
 
