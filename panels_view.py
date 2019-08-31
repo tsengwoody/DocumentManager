@@ -66,6 +66,7 @@ class PanelView(wx.Panel):
         self.panelItem.SetSize(self.Size)
     
     def updatePanel(self, title, content, _type, data):
+        self.is_set_eventbind = not self.is_count_total
         if _type == PanelType.SECTION.value:
             return SectionPanel(parent=self, title=title, content=content, _type=_type, data=data, eventParent=self)
         elif _type == PanelType.TEXT.value:
@@ -142,9 +143,11 @@ class SectionPanel(wx.Panel):
         self.bsizer.Add(self.button_panel, 0, wx.EXPAND|wx.ALL)
 
         self.SetSizer(self.bsizer)
-        self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
-        self.lst.Bind(wx.EVT_TEXT_ENTER,self.onDBClickItem)  
-        self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
+
+        if self.eventPanent and self.eventPanent.is_set_eventbind == True:
+            self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
+            self.lst.Bind(wx.EVT_TEXT_ENTER,self.onDBClickItem)  
+            self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
         
         print(f"SectionPanel name: {self.name}")#, content: {self.content}")
 
