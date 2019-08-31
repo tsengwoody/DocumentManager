@@ -88,7 +88,7 @@ class SectionPanel(wx.Panel):
         self.name = title
         self.content = content
         self.type = _type
-        self.data = data
+        self.data = data.copy()
         self.eventPanent = eventParent
 
         self.buttons = []
