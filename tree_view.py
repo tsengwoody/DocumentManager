@@ -21,18 +21,26 @@ class TreeView(wx.TreeCtrl):
         self.fileMenu.Append(wx.ID_ANY,  "Import")
         self.fileMenu.Append(wx.ID_ANY,  "Export")
 
-        self.Bind(wx.EVT_LEFT_DOWN, self.activeItem, self)
+        #self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
         self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
         self.root = self.AddRoot("root") 
         self.setData(data)
         pub.subscribe(self.setData, "data_changedTree")
 
-    def activeItem(self, event):
-        item, flags = self.HitTest(event.GetPosition())
+    #def onLeftMouseDown(self, event):
+    #    item, flags = self.HitTest(event.GetPosition())
+    #    self.active_item(event, item)
+
+    def onSelChanged(self, event):
+        item = event.GetItem()
+        self.active_item(event, item)
+    
+    def active_item(self, event, item):
         if item.ID is not None:
             pyData = self.GetItemData(item)
-            index = pyData[1]
+            index = pyData[1]    
             if index != wx.NOT_FOUND: 
                 self.SelectItem(item)       
                 label = self.GetItemText(item)
