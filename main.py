@@ -49,6 +49,10 @@ class Model:
                 source = []
         self.data['index'] = index_array
         self.data['label'] = path_str
+        if 'skip' in self.data:
+            del self.data['skip']
+        if 'skip' in data:
+            self.data['skip'] = data['skip']
         current_index = data['index']
         data = self.data.copy()
         data['index'] = current_index
