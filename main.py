@@ -59,12 +59,14 @@ class Controller:
         self.model = Model()
 
         self.frame = FrameView(None, title = 'math content manager', size=wx.Size(800, 400))
-        self.tree = TreeView(self.frame, self.model.ori_data)
-        self.toolbarPanel = ToolBarView(self.frame, self.model.data)
+        self.panel = wx.Panel(self.frame)
 
-        self.rightTopPanel = PanelView(self.frame, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4, self.frame.Size.height/3), data=self.model.data)      
+        self.tree = TreeView(self.panel, self.model.ori_data)
+        self.toolbarPanel = ToolBarView(self.panel, self.model.data)
+
+        self.rightTopPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4, self.frame.Size.height/3), data=self.model.data)      
   
-        self.rightBottomPanel = PanelView(self.frame, title=self.model.data['label'], pos=(self.frame.Size.width/4, self.frame.Size.height/2), size=(self.frame.Size.width*3/4, self.frame.Size.height/2), data=self.model.data, is_count_total=True)
+        self.rightBottomPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, self.frame.Size.height/2), size=(self.frame.Size.width*3/4, self.frame.Size.height/2), data=self.model.data, is_count_total=True)
         self.frame.show(True)
 
         pub.subscribe(self.changeData, 'data_changing')
