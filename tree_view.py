@@ -1,6 +1,6 @@
 ﻿import wx
 from pubsub import pub
-from dm_enum import InputType
+from enums import InputType
 
 class TreeView(wx.TreeCtrl):
     id = 1
@@ -21,17 +21,17 @@ class TreeView(wx.TreeCtrl):
         self.fileMenu.Append(wx.ID_ANY,  "Import")
         self.fileMenu.Append(wx.ID_ANY,  "Export")
 
-        #self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
+        self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
         self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
-        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
+        #self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
         self.root = self.AddRoot("root") 
         self.setData(data)
         pub.subscribe(self.setData, "data_changedTree")
 
-    #def onLeftMouseDown(self, event):
-    #    item, flags = self.HitTest(event.GetPosition())
-    #    self.active_item(event, item)
+    def onLeftMouseDown(self, event):
+        item, flags = self.HitTest(event.GetPosition())
+        self.active_item(event, item)
 
     def onSelChanged(self, event):
         item = event.GetItem()
@@ -53,7 +53,7 @@ class TreeView(wx.TreeCtrl):
             index = pyData[1]
             if index != wx.NOT_FOUND: 
                 self.SelectItem(item)
-                self.activeItem(event)
+                self.active_item(event, item)
                 if self.fileMenu.Window is None:
                     self.PopupMenu(self.fileMenu, event.GetPosition())
         event.Skip()

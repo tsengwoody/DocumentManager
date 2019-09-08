@@ -19,7 +19,7 @@ from frame_view import FrameView
 from panels_view import PanelView
 from toolbar_view import ToolBarView
 from tree_view import TreeView
-from dm_enum import InputType
+from enums import InputType, ConstValue
 from fakedata import documents
 
 class Model:
@@ -49,10 +49,10 @@ class Model:
                 source = []
         self.data['index'] = index_array
         self.data['label'] = path_str
-        if 'skip' in self.data:
-            del self.data['skip']
-        if 'skip' in data:
-            self.data['skip'] = data['skip']
+        if ConstValue.SKIP.value in self.data:
+            del self.data[ConstValue.SKIP.value]
+        if ConstValue.SKIP.value in data:
+            self.data[ConstValue.SKIP.value] = data[ConstValue.SKIP.value]
         current_index = data['index']
         data = self.data.copy()
         data['index'] = current_index
@@ -60,10 +60,10 @@ class Model:
 
 class Controller:
     def __init__(self):
+        self.size = wx.Size(800, 400)
         self.model = Model()
-
-        self.frame = FrameView(None, title = 'math content manager', size=wx.Size(800, 400))
-        self.panel = wx.Panel(self.frame, size=wx.Size(800, 400))
+        self.frame = FrameView(None, title = 'math content manager', size=self.size)
+        self.panel = wx.Panel(self.frame, size=self.size)
 
         self.tree = TreeView(self.panel, self.model.ori_data)
         self.toolbarPanel = ToolBarView(self.panel, self.model.data)

@@ -1,8 +1,7 @@
 import wx
 from pubsub import pub
 
-from enums import ImageIdEnum
-from dm_enum import InputType
+from enums import ImageIdEnum, InputType
 from asciimathml import parse
 
 class ToolBarView(wx.Panel):
@@ -36,9 +35,10 @@ class ToolBarView(wx.Panel):
 
     def backPath(self, event):
         print("back to previous path")
-        if len(self.index_array) > 1:
+        if len(self.index_array) > 2:
             self.index_array.pop()
-            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': self.data['current_folder_layer']-1,'index': self.index_array[-1]})
+            self.index_array.pop()
+            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': self.data['current_folder_layer']-2,'index': self.index_array[-1]})
 
 
        

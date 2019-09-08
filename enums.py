@@ -1,4 +1,4 @@
-
+from enum import Enum
 class ImageIdEnum:
     DOCUMENT = 0
     SECTION  = 1
@@ -16,3 +16,18 @@ class ImageIdEnum:
             return ImageIdEnum.TEXT
         elif _type == "mathml":
             return ImageIdEnum.MATHML
+
+class InputType(Enum):
+    TREE = 1
+    PANEL = 2
+    ITEM = 4
+
+
+class PanelType(Enum):
+    SECTION = "section"
+    TEXT = "text"
+    MATH = "mathml"
+
+class ConstValue(Enum):
+    SKIP = "skip"
+    CONTINUE = "continue"

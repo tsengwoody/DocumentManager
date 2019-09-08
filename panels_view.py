@@ -1,8 +1,7 @@
 import wx
 from pubsub import pub
 
-from enums import ImageIdEnum
-from dm_enum import InputType, PanelType
+from enums import ImageIdEnum, InputType, PanelType, ConstValue
 from asciimathml import parse
 
 # Debug
@@ -49,7 +48,7 @@ class PanelView(wx.Panel):
         else:
             if 'items' not in data:
                 return
-            elif 'skip' in data and data['skip']=='skip_enter':
+            elif ConstValue.SKIP.value in data and data[ConstValue.SKIP.value]==ConstValue.SKIP.value:
                 return
             self.contents = data['items']
             if 'current_folder_layer' not in data:
@@ -64,6 +63,11 @@ class PanelView(wx.Panel):
         self.panelItem = self.updatePanel(title=self.label, content=self.contents, _type=self.type, data=self.data)
         self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)
         self.panelItem.SetSize(self.Size)
+        if self.is_count_total==False:
+            if hasattr(self.panelItem, "getList"):
+                lst = self.panelItem.getList()
+                lst.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+                self.SetFocus()
     
     def updatePanel(self, title, content, _type, data):
         self.is_set_eventbind = not self.is_count_total
@@ -151,25 +155,28 @@ class SectionPanel(wx.Panel):
         
         print(f"SectionPanel name: {self.name}")#, content: {self.content}")
 
+    def getList(self):
+        return self.lst
+
     def onDBClickItem(self, event):
         item = event.GetItem()
         index = item.GetId()
         if index != wx.NOT_FOUND:         
-            self.sendItemMsg(index, custom_arg='enter')
+            self.sendItemMsg(index, custom_arg=ConstValue.CONTINUE.value)
 
     def onSelectedItem(self, event):
         item = event.GetItem()
         index = item.GetId()
         self.sendItemMsg(index)
 
-    def sendItemMsg(self, index, custom_arg='skip'):
+    def sendItemMsg(self, index, custom_arg=ConstValue.SKIP.value):
         data = self.data['items'][index]
         _type = data['type']
         label = data['label']
-        if custom_arg=='enter' or _type == PanelType.TEXT.value or _type == PanelType.MATH.value:
+        if custom_arg==ConstValue.CONTINUE.value and _type == PanelType.SECTION.value:
             pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': data['current_folder_layer'],'index': index, 'label': label})
         else:
-            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': data['current_folder_layer'],'index': index, 'label': label, 'skip':'skip_enter'})            
+            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': data['current_folder_layer'],'index': index, 'label': label, ConstValue.SKIP.value:ConstValue.SKIP.value})            
 
     def onPanelActivated(self, newdata=None):
         self.modelBindView(newdata)
