@@ -151,7 +151,8 @@ class SectionPanel(wx.Panel):
 
         if self.eventPanent and self.eventPanent.is_set_eventbind == True:
             self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
-            self.lst.Bind(wx.EVT_TEXT_ENTER,self.onDBClickItem)  
+            self.lst.Bind(wx.EVT_TEXT_ENTER,self.onDBClickItem)
+            self.lst.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
             self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
             self.lst.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.onItemRightClick)
 
@@ -159,6 +160,11 @@ class SectionPanel(wx.Panel):
 
     def getList(self):
         return self.lst
+
+    def onKeyDown(self, event):
+        if event.GetKeyCode() == wx.WXK_DELETE:   
+            parent = self.eventPanent
+            self.fileMenu.OnDelete(event, parent)
 
     def onDBClickItem(self, event):
         item = event.GetItem()

@@ -88,6 +88,3 @@ class ToolBarView(wx.Panel):
             self.index_array.pop()
             self.index_array.pop()
             pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': self.data['current_folder_layer']-2,'index': self.index_array[-1]})
-
-
-       
