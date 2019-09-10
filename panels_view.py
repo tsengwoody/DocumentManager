@@ -165,6 +165,7 @@ class SectionPanel(wx.Panel):
         if event.GetKeyCode() == wx.WXK_DELETE:   
             parent = self.eventPanent
             self.fileMenu.OnDelete(event, parent)
+        event.Skip()
 
     def onDBClickItem(self, event):
         item = event.GetItem()
