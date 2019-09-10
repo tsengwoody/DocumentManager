@@ -1,4 +1,5 @@
 ﻿import wx
+from toolbar_view import fileMenuView
 from pubsub import pub
 from enums import InputType
 
@@ -13,14 +14,7 @@ class TreeView(wx.TreeCtrl):
         docBitmap = wx.Bitmap("./icons/documents.png", wx.BITMAP_TYPE_PNG)
         il.Add(docBitmap)
         self.AssignImageList(il)
-
-        self.fileMenu = wx.Menu()
-        self.fileMenu.Append(wx.ID_ANY,  "Add folder")
-        self.fileMenu.Append(wx.ID_ANY,  "Update folder")
-        self.fileMenu.Append(wx.ID_ANY,  "Delete folder")
-        self.fileMenu.Append(wx.ID_ANY,  "Import")
-        self.fileMenu.Append(wx.ID_ANY,  "Export")
-
+        self.fileMenu = fileMenuView(self.panel)
         self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
         self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
         #self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)

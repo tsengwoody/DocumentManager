@@ -3,6 +3,7 @@ from pubsub import pub
 
 from enums import ImageIdEnum, InputType, PanelType, ConstValue
 from asciimathml import parse
+from toolbar_view import fileMenuView
 
 # Debug
 import pprint
@@ -23,6 +24,7 @@ class PanelView(wx.Panel):
         self.parent = parent
         self.type = InputType.PANEL
         self.data = data
+        self.fileMenu = fileMenuView(self)
         self.is_count_total = is_count_total
         self.insideItems = wx.BoxSizer(wx.HORIZONTAL)
         self.SetBackgroundColour( wx.Colour( 112, 186, 248 ) )
@@ -97,7 +99,7 @@ class SectionPanel(wx.Panel):
         self.type = _type
         self.data = data.copy()
         self.eventPanent = eventParent
-
+        self.fileMenu = eventParent.fileMenu
         self.buttons = []
 
         
@@ -141,7 +143,6 @@ class SectionPanel(wx.Panel):
         self.button_panel.SetSizer(self.bsizer_btn)
         self.button_panel.Fit()
 
-
         self.bsizer = wx.BoxSizer(wx.HORIZONTAL)
         self.bsizer.Add(self.lst, 1, wx.EXPAND|wx.ALL, border=5)
         self.bsizer.Add(self.button_panel, 0, wx.EXPAND|wx.ALL)
@@ -152,7 +153,8 @@ class SectionPanel(wx.Panel):
             self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
             self.lst.Bind(wx.EVT_TEXT_ENTER,self.onDBClickItem)  
             self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
-        
+            self.lst.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.onItemRightClick)
+
         print(f"SectionPanel name: {self.name}")#, content: {self.content}")
 
     def getList(self):
@@ -168,6 +170,17 @@ class SectionPanel(wx.Panel):
         item = event.GetItem()
         index = item.GetId()
         self.sendItemMsg(index)
+
+    def onItemRightClick(self, event):
+        item = event.GetItem()
+        index = item.GetId()
+        if index != wx.NOT_FOUND: 
+            self.lst.Select(index)
+            self.sendItemMsg(index)
+            rect = self.lst.GetItemRect(index)
+            if self.fileMenu.Window is None:
+                self.PopupMenu(self.fileMenu, wx.Point(rect.Left+rect.Width/2, rect.Top+rect.Height/2))
+        event.Skip()        
 
     def sendItemMsg(self, index, custom_arg=ConstValue.SKIP.value):
         data = self.data['items'][index]
@@ -275,6 +288,7 @@ class TextPanel(wx.Panel):
         wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
         self.name = title
         self.content = content
+        self.fileMenu = eventParent.fileMenu
         self.type = _type
         self.data = data
         self.buttons = []
@@ -316,19 +330,8 @@ class TextPanel(wx.Panel):
             self.modelBindView()
 
     def OnExport(self, event):
-        with wx.FileDialog(self, "Save export file", wildcard="export files (*.json)|*.json",
-                       style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
-
-            if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return     # the user changed their mind
-
-            # save the current contents in the file
-            pathname = fileDialog.GetPath()
-            try:
-                with open(pathname, 'w', encoding="utf-8") as file:
-                    file.write(self.content)
-            except IOError:
-                wx.LogError("Cannot save current data in file '%s'." % pathname)
+        parent = self
+        self.fileMenu.OnExport(event, parent)
 
     def modelBindView(self):
         """Model 資料放回至 View 中"""
@@ -341,7 +344,7 @@ class TextPanel(wx.Panel):
 
     def buttonData(self):
         return (
-            (("rewrite"), self.OnRewrite),
+            (("Rewrite"), self.OnRewrite),
             (("Export"), self.OnExport)
         )
 
@@ -458,9 +461,9 @@ class MathmlPanel(wx.Panel):
 
     def buttonData(self):
         return (
-            (("rewrite"), self.OnRewrite),
-            (("interaction"), self.OnInteraction),
-            (("copy"), self.OnRawdataToClip),
+            (("Rewrite"), self.OnRewrite),
+            (("Interaction"), self.OnInteraction),
+            (("Copy"), self.OnRawdataToClip),
         )
 
     def createButtonBar(self, panel, xPos = 0):
