@@ -32,7 +32,9 @@ class TreeView(wx.TreeCtrl):
         self.active_item(event, item)
     
     def active_item(self, event, item):
+        self.fileMenu.RemoveAll()
         if item.ID is not None:
+            self.fileMenu.InitOverItemMenu()
             pyData = self.GetItemData(item)
             index = pyData[1]    
             if index != wx.NOT_FOUND: 
@@ -42,7 +44,9 @@ class TreeView(wx.TreeCtrl):
 
     def onItemRightClick(self, event):
         item, flags = self.HitTest(event.GetPosition())
+        self.fileMenu.RemoveAll()
         if item.ID is not None:
+            self.fileMenu.InitOverItemMenu()
             pyData = self.GetItemData(item)
             index = pyData[1]
             if index != wx.NOT_FOUND: 
@@ -50,6 +54,10 @@ class TreeView(wx.TreeCtrl):
                 self.active_item(event, item)
                 if self.fileMenu.Window is None:
                     self.PopupMenu(self.fileMenu, event.GetPosition())
+        else:
+            self.fileMenu.InitNoneOverItemMenu()
+            if self.fileMenu.Window is None:
+                self.PopupMenu(self.fileMenu, event.GetPosition())            
         event.Skip()
 
     def setData(self, data):

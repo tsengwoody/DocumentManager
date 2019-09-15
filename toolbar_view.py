@@ -1,28 +1,51 @@
 import wx
 from pubsub import pub
 
-from enums import ImageIdEnum, InputType
+from enums import ImageIdEnum, InputType, ConstValue
 from asciimathml import parse
+from dialog import NewItemDialog
+from component_view import SectionPanel, TextPanel, MathmlPanel
 
 class fileMenuView(wx.Menu):
     def __init__(self, parent):
         wx.Menu.__init__(self)
         self.parent = parent
-        self.Append(wx.ID_ANY,  "Add folder")
-        self.Append(wx.ID_ANY,  "Update folder")
+
+        self.menu_add=self.Append(wx.ID_ANY,  "Add Item")
+        self.Enable(self.menu_add.GetId(), False)
+        self.Bind(wx.EVT_MENU, self.OnAdd, self.menu_add)
+
+        self.menu_update=self.Append(wx.ID_ANY,  "Update")
+        self.Bind(wx.EVT_MENU, self.onUpdate, self.menu_update)
         
-        menu_delete=self.Append(wx.ID_ANY,  "Delete folder")
-        self.Bind(wx.EVT_MENU, self.OnMenuDelete, menu_delete)
+        self.menu_delete=self.Append(wx.ID_ANY,  "Delete")
+        self.Bind(wx.EVT_MENU, self.OnDelete, self.menu_delete)
 
-        self.Append(wx.ID_ANY,  "Import")
-        menu_export=self.Append(wx.ID_ANY,  "Export")
-        self.Bind(wx.EVT_MENU, self.OnMenuExport, menu_export)
+        self.menu_import=self.Append(wx.ID_ANY,  "Import")
+        self.Enable(self.menu_import.GetId(), False)
 
-    def OnMenuDelete(self, event):
-        parent = self.parent
-        self.OnDelete(event, parent)
+        self.menu_export=self.Append(wx.ID_ANY,  "Export")
+        self.Bind(wx.EVT_MENU, self.OnExport, self.menu_export)
 
-    def OnDelete(self, event, parent):        
+    def InitOverItemMenu(self):
+        self.Enable(self.menu_update.GetId(), True)
+        self.Enable(self.menu_delete.GetId(), True)
+        self.Enable(self.menu_export.GetId(), True)
+        self.Enable(self.menu_add.GetId(), False)
+        self.Enable(self.menu_import.GetId(), False)
+
+    def InitNoneOverItemMenu(self):
+        self.Enable(self.menu_update.GetId(), False)
+        self.Enable(self.menu_delete.GetId(), False)
+        self.Enable(self.menu_export.GetId(), False)
+        self.Enable(self.menu_add.GetId(), True)
+        self.Enable(self.menu_import.GetId(), True)
+        
+    def RemoveAll(self):
+        return True
+
+    def OnDelete(self, event):
+        parent = self.parent    
         caption = "即將刪除"
         message = "確認是否刪除?"
         dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.CANCEL | wx.ICON_QUESTION)
@@ -31,14 +54,13 @@ class fileMenuView(wx.Menu):
             item = lst.GetFocusedItem()
             if item != -1:
                 lst.DeleteItem(item)
+                pub.sendMessage("data_changing", data={'del': True, ConstValue.SKIP.value:ConstValue.SKIP.value})
+                lst.Select(0)
                 return True
             return False
 
-    def OnMenuExport(self, event):
+    def OnExport(self, event):
         parent = self.parent
-        self.OnExport(event, parent)
-
-    def OnExport(self, event, parent):
         with wx.FileDialog(parent, "Save export file", wildcard="export files (*.json)|*.json",
                        style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
 
@@ -51,7 +73,57 @@ class fileMenuView(wx.Menu):
                 with open(pathname, 'w', encoding="utf-8") as file:
                     file.write(parent.content)
             except IOError:
-                wx.LogError("Cannot save current data in file '%s'." % pathname)        
+                wx.LogError("Cannot save current data in file '%s'." % pathname)
+
+    # FolderPanel
+    # FolderPanel Update 按鈕觸發事件
+    def onUpdate(self, event):
+        lst = self.parent.panelItem.getList()
+        item = lst.GetFocusedItem()
+        if item < 0:
+            event.Skip()
+            return
+
+        event = wx.PyCommandEvent(wx.EVT_LIST_BEGIN_LABEL_EDIT.typeId,self.menu_update.GetId())
+        wx.PostEvent(lst, event)
+        oldPanelName = lst.GetItemText(item)
+        dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=oldPanelName, style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            updatePanelName = dlg.GetValue()
+            lst.SetItemText(item, updatePanelName)
+            pub.sendMessage("data_changing", data={'label': updatePanelName, ConstValue.SKIP.value:ConstValue.SKIP.value})
+
+        dlg.Destroy()
+
+    # FolderPanel Add 按鈕觸發事件
+    def OnAdd(self, event):
+        # TODO 要更改成可以選新增物件的 type
+        """FolderPanel Add 按鈕觸發事件"""
+        dlg = NewItemDialog(self.parent)
+        ret = dlg.ShowModal()
+
+        index = 0 # 一開始沒初始化會跳 error
+        if ret == wx.ID_OK:
+            
+            # TODO 先預設成新增的全部都是 Section
+            title = dlg.newItemName
+            _type = dlg.newItemType
+            data = []
+
+            if _type == "section":
+                SectionPanel(parent=self.parent, title=title, content=[], _type=_type, data=data, eventParent=self.parent)
+            elif _type == "text":
+                TextPanel(parent=self.parent, title=title, content=[], _type=_type, data=data, eventParent=self.parent)
+            elif _type == "mathml":
+                MathmlPanel(parent=self.parent, title=title, content=[], _type=_type, data=data, eventParent=self.parent)
+
+            lst = self.parent.panelItem.getList()
+            index = lst.InsertItem(lst.GetItemCount(), title, ImageIdEnum.typeToEnum(_type))
+            pub.sendMessage("data_changing", data={'label': title, 'type':_type, 'index': index, 'items':data, ConstValue.SKIP.value:ConstValue.SKIP.value})
+            lst.Focus(index)
+            lst.Select(index)
+        dlg.Destroy()
 
 class ToolBarView(wx.Panel):
     def __init__(self, parent, data):

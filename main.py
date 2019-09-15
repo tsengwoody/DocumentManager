@@ -32,11 +32,22 @@ class Model:
         index_array = self.data['index']
         if 'current_folder_layer' in data:
             self.current_folder_layer = data['current_folder_layer']
-        index_array.insert(self.current_folder_layer,data['index'])
-        del index_array[self.current_folder_layer+1:] 
+        if 'index' in data:    
+            index_array.insert(self.current_folder_layer,data['index'])
+            del index_array[self.current_folder_layer+1:]
         source = self.ori_data['items']
         path_str = ""
         for idx, val in enumerate(index_array):
+            if (len(index_array)-1 == idx):
+                if val >= len(source):
+                    source.append({'label': data['label'], 'type': data['type'], 'items': data['items']})
+                elif 'label' in data and (source[val]['label'] != data['label']):
+                    source[val]['label'] = data['label']
+                elif 'del' in data and data['del'] == True:
+                    del source[val]
+                    val = 0
+                    if len(source)==0:
+                        break
             path_str = path_str + ('' if idx==0 else '/') + source[val]['label']
             self.data['type'] = source[val]['type']
             self.data['current_folder_layer'] = self.current_folder_layer
@@ -53,7 +64,10 @@ class Model:
             del self.data[ConstValue.SKIP.value]
         if ConstValue.SKIP.value in data:
             self.data[ConstValue.SKIP.value] = data[ConstValue.SKIP.value]
-        current_index = data['index']
+        if 'index' in data:
+            current_index = data['index']
+        else:
+            current_index = index_array[len(index_array)-1]
         data = self.data.copy()
         data['index'] = current_index
         pub.sendMessage("data_changed", data=data)
