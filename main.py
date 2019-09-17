@@ -32,8 +32,11 @@ class Model:
         index_array = self.data['index']
         if 'current_folder_layer' in data:
             self.current_folder_layer = data['current_folder_layer']
-        if 'index' in data:    
-            index_array.insert(self.current_folder_layer,data['index'])
+        if 'index' in data:
+            if isinstance(data['index'], list):
+                index_array = data['index']
+            else:
+                index_array.insert(self.current_folder_layer,data['index'])
             del index_array[self.current_folder_layer+1:]
         source = self.ori_data['items']
         path_str = ""
@@ -65,7 +68,10 @@ class Model:
         if ConstValue.SKIP.value in data:
             self.data[ConstValue.SKIP.value] = data[ConstValue.SKIP.value]
         if 'index' in data:
-            current_index = data['index']
+            if isinstance(data['index'], list):
+                current_index = data['index'][len(data['index'])-1]
+            else:
+                current_index = data['index']
         else:
             current_index = index_array[len(index_array)-1]
         data = self.data.copy()
@@ -74,7 +80,7 @@ class Model:
 
 class Controller:
     def __init__(self):
-        self.size = wx.Size(800, 400)
+        self.size = wx.Size(1000, 400)
         self.model = Model()
         self.frame = FrameView(None, title = 'math content manager', size=self.size)
         self.panel = wx.Panel(self.frame, size=self.size)

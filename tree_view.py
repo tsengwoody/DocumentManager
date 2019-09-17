@@ -14,7 +14,7 @@ class TreeView(wx.TreeCtrl):
         docBitmap = wx.Bitmap("./icons/documents.png", wx.BITMAP_TYPE_PNG)
         il.Add(docBitmap)
         self.AssignImageList(il)
-        self.fileMenu = fileMenuView(self.panel)
+        self.fileMenu = fileMenuView(self)
         self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
         self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
         #self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
@@ -36,11 +36,12 @@ class TreeView(wx.TreeCtrl):
         if item.ID is not None:
             self.fileMenu.InitOverItemMenu()
             pyData = self.GetItemData(item)
-            index = pyData[1]    
-            if index != wx.NOT_FOUND: 
+            level = pyData[1]
+            index_array = pyData[2]
+            if index_array is not None and index_array[0] != wx.NOT_FOUND: 
                 self.SelectItem(item)       
                 label = self.GetItemText(item)
-                pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'index': index, 'label': label, 'current_folder_layer': 0})
+                pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'index': index_array, 'label': label, 'current_folder_layer': level})
 
     def onItemRightClick(self, event):
         item, flags = self.HitTest(event.GetPosition())
@@ -61,11 +62,22 @@ class TreeView(wx.TreeCtrl):
         event.Skip()
 
     def setData(self, data):
-        self.data = data['items']
+        items = data['items']
         self.DeleteAllItems()
-        print("data msg in tree view:", self.data)
-        for index, item in enumerate( self.data ):
-            label = item['label']
-            childID = self.AppendItem(self.root, label, 0)
-            self.SetPyData(childID, (label, index))
- 
+        print("data msg in tree view:", items)
+        self.expandChild(self.root, 0, [], items)
+        self.ExpandAll()
+
+    def expandChild(self, parent, level, index_array, data=[]):
+        if data is None or len(data) == 0:
+            return False
+        else:
+            for index, item in enumerate(data):
+                if 'items' in item:
+                    _index_array = index_array.copy()
+                    label = item['label']
+                    childID = self.AppendItem(parent, label, 0)
+                    _index_array.insert(level, index)
+                    self.SetPyData(childID, (label, level, _index_array))
+                    self.expandChild(childID, level+1, _index_array.copy(), item['items'])
+                    self.Expand(childID)

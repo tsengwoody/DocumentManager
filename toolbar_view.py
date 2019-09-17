@@ -50,13 +50,17 @@ class fileMenuView(wx.Menu):
         message = "確認是否刪除?"
         dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.CANCEL | wx.ICON_QUESTION)
         if dlg.ShowModal() == wx.ID_OK:
-            lst = parent.panelItem.getList()
-            item = lst.GetFocusedItem()
-            if item != -1:
-                lst.DeleteItem(item)
-                pub.sendMessage("data_changing", data={'del': True, ConstValue.SKIP.value:ConstValue.SKIP.value})
-                lst.Select(0)
-                return True
+            if hasattr(parent, 'panelItem') and isinstance(parent.panelItem, wx.Panel) :
+                lst = parent.panelItem.getList()
+            elif isinstance(parent, wx.TreeCtrl):
+                lst = parent.GetImageList()
+            if lst is not None:
+                item = lst.GetFocusedItem()
+                if item != -1:
+                    lst.DeleteItem(item)
+                    pub.sendMessage("data_changing", data={'del': True, ConstValue.SKIP.value:ConstValue.SKIP.value})
+                    lst.Select(0)
+                    return True
             return False
 
     def OnExport(self, event):
