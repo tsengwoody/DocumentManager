@@ -1,7 +1,7 @@
 import wx
 from pubsub import pub
 
-from enums import ImageIdEnum, InputType, PanelType, ConstValue
+from enums import ImageIdEnum, InputType, PanelType, ActionType
 from asciimathml import parse
 # ==========================================================================================
 # SectionPanel
@@ -112,12 +112,12 @@ class SectionPanel(wx.Panel):
         item = event.GetItem()
         index = item.GetId()
         if index != wx.NOT_FOUND:         
-            self.sendItemMsg(index, custom_arg=ConstValue.CONTINUE.value)
+            self.sendItemMsg(index)
 
     def onSelectedItem(self, event):
         item = event.GetItem()
         index = item.GetId()
-        self.sendItemMsg(index)
+        self.sendItemMsg(index, action=ActionType.COUNTING.value)
 
     def onRightClick(self, event):
         self.fileMenu.RemoveAll()
@@ -133,18 +133,20 @@ class SectionPanel(wx.Panel):
             if self.fileMenu.Window is None:
                 self.PopupMenu(self.fileMenu, event.GetPosition())
 
-    def sendItemMsg(self, index, custom_arg=ConstValue.SKIP.value):
+    def sendItemMsg(self, index, action=ActionType.NONE.value):
         data = {'items':[]}
-        if 'items' in self.data and index < len(self.data['items']):
+        _type = self.data['type']
+        label = self.data['label']
+        if 'items' in self.data:
+            if index < len(self.data['items']):
                 data = self.data['items'][index]
                 _type = data['type']
                 label = data['label']
-        if 'items' in data and data['items'] == []:
-            data['current_folder_layer'] = self.data['current_folder_layer']+1
-        if custom_arg==ConstValue.CONTINUE.value and _type == PanelType.SECTION.value:
-            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': data['current_folder_layer'],'index': index, 'label': label})
+        data['layer'] = self.data['layer']+1
+        if action==ActionType.NONE.value and self.data['type'] == PanelType.SECTION.value:
+            pub.sendMessage("data_changing", data={'type': PanelType.SECTION.value, 'layer': data['layer'], 'index': index, 'label': label})
         else:
-            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': data['current_folder_layer'],'index': index, 'label': label, ConstValue.SKIP.value:ConstValue.SKIP.value})            
+            pub.sendMessage("data_changing", data={'type': _type, 'layer': data['layer'], 'index': index, 'label': label, 'action':action})
 
     def onPanelActivated(self, newdata=None):
         self.modelBindView(newdata)

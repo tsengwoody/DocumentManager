@@ -20,8 +20,8 @@ class TreeView(wx.TreeCtrl):
         #self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
         self.root = self.AddRoot("root") 
-        self.setData(data)
         pub.subscribe(self.setData, "data_changedTree")
+        self.setData(data)
 
     def onLeftMouseDown(self, event):
         item, flags = self.HitTest(event.GetPosition())
@@ -41,7 +41,7 @@ class TreeView(wx.TreeCtrl):
             if index_array is not None and index_array[0] != wx.NOT_FOUND: 
                 self.SelectItem(item)       
                 label = self.GetItemText(item)
-                pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'index': index_array, 'label': label, 'current_folder_layer': level})
+                pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'index': index_array, 'label': label, 'layer': level})
 
     def onItemRightClick(self, event):
         item, flags = self.HitTest(event.GetPosition())

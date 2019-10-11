@@ -28,6 +28,9 @@ class PanelType(Enum):
     TEXT = "text"
     MATH = "mathml"
 
-class ConstValue(Enum):
-    SKIP = "skip"
-    CONTINUE = "continue"
+class ActionType(Enum):
+    DEL = "del"
+    ADD = "add"
+    UPDATE = "update"
+    COUNTING = "update_count"
+    NONE = "none"

@@ -1,7 +1,7 @@
 import wx
 from pubsub import pub
 
-from enums import ImageIdEnum, InputType, ConstValue
+from enums import ImageIdEnum, InputType, ActionType
 from asciimathml import parse
 from dialog import NewItemDialog
 from component_view import SectionPanel, TextPanel, MathmlPanel
@@ -58,7 +58,7 @@ class fileMenuView(wx.Menu):
                 item = lst.GetFocusedItem()
                 if item != -1:
                     lst.DeleteItem(item)
-                    pub.sendMessage("data_changing", data={'del': True, ConstValue.SKIP.value:ConstValue.SKIP.value})
+                    pub.sendMessage("data_changing", data={'action': ActionType.DEL.value})
                     lst.Select(0)
                     return True
             return False
@@ -96,7 +96,7 @@ class fileMenuView(wx.Menu):
         if dlg.ShowModal() == wx.ID_OK:
             updatePanelName = dlg.GetValue()
             lst.SetItemText(item, updatePanelName)
-            pub.sendMessage("data_changing", data={'label': updatePanelName, ConstValue.SKIP.value:ConstValue.SKIP.value})
+            pub.sendMessage("data_changing", data={'label': updatePanelName, 'action':ActionType.UPDATE.value})
 
         dlg.Destroy()
 
@@ -124,7 +124,7 @@ class fileMenuView(wx.Menu):
 
             lst = self.parent.panelItem.getList()
             index = lst.InsertItem(lst.GetItemCount(), title, ImageIdEnum.typeToEnum(_type))
-            pub.sendMessage("data_changing", data={'label': title, 'type':_type, 'index': index, 'items':data, ConstValue.SKIP.value:ConstValue.SKIP.value})
+            pub.sendMessage("data_changing", data={'label': title, 'type':_type, 'index': index, 'items':data, 'action': ActionType.ADD.value})
             lst.Focus(index)
             lst.Select(index)
         dlg.Destroy()
@@ -135,7 +135,6 @@ class ToolBarView(wx.Panel):
         self.parent = parent
         self.data = data
         self.index_array = data['index']
-        self.current_folder_layer = 0
         backPathBitmap = wx.Bitmap("./icons/backPath.png", wx.BITMAP_TYPE_PNG)
         self.backPathbtn = wx.Button(self, -1, style=wx.BU_BOTTOM | wx.BU_NOTEXT)
         self.backPathbtn.SetBitmap(backPathBitmap, wx.BOTTOM)
@@ -151,9 +150,9 @@ class ToolBarView(wx.Panel):
 
     def setData(self, data):
         try:
-            self.current_folder_layer = data['current_folder_layer']
-            self.index_array.insert(self.current_folder_layer,data['index'])
-            del self.index_array[self.current_folder_layer+1:] 
+            layer = data['layer']
+            self.index_array.insert(layer,data['index'])
+            del self.index_array[layer+1:] 
             self.pathText.SetLabel(data['label'])
         except AttributeError:
             print("there is no created pathText")
@@ -163,4 +162,4 @@ class ToolBarView(wx.Panel):
         if len(self.index_array) > 2:
             self.index_array.pop()
             self.index_array.pop()
-            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'current_folder_layer': self.data['current_folder_layer']-2,'index': self.index_array[-1]})
+            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'layer': self.data['layer']-2,'index': self.index_array[-1]})

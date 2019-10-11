@@ -19,54 +19,64 @@ from frame_view import FrameView
 from panels_view import PanelView
 from toolbar_view import ToolBarView
 from tree_view import TreeView
-from enums import InputType, ConstValue
+from enums import InputType, PanelType, ActionType
 from fakedata import documents
 
+# layer: current folder layer number in data
+# index: current item index number in a layer
 class Model:
     def __init__(self):
         self.ori_data = {'items': documents}
-        self.data = {'items': documents[0]['items'], 'index':[0], 'label':documents[0]['label'], 'type':documents[0]['type']}
-        self.current_folder_layer=0
+        self.data = {'items': documents[0]['items'], 'index':[0], 'layer': 0, 'label':documents[0]['label'], 'type':documents[0]['type']}
+        self.event_name = ['data_changed', 'count_changed']
 
     def updateItem(self, data):
         index_array = self.data['index']
-        if 'current_folder_layer' in data:
-            self.current_folder_layer = data['current_folder_layer']
+        layer = data['layer'] if 'layer' in data else 0
+        if 'action' in data:
+            self.data['action'] = data['action']
+        elif 'action' in self.data:
+            del self.data['action'] 
+        count_data_items = []
         if 'index' in data:
             if isinstance(data['index'], list):
                 index_array = data['index']
             else:
-                index_array.insert(self.current_folder_layer,data['index'])
-            del index_array[self.current_folder_layer+1:]
+                index_array.insert(layer, data['index'])
+            del index_array[layer+1:]
         source = self.ori_data['items']
         path_str = ""
         for idx, val in enumerate(index_array):
             if (len(index_array)-1 == idx):
                 if val >= len(source):
-                    source.append({'label': data['label'], 'type': data['type'], 'items': data['items']})
+                    source.append({'label': data['label'], 'type': data['type'], 'items': data['items'] if 'items' in data else []})
                 elif 'label' in data and (source[val]['label'] != data['label']):
                     source[val]['label'] = data['label']
-                elif 'del' in data and data['del'] == True:
+                elif 'action' in data and data['action'] == ActionType.DEL.value:
                     del source[val]
                     val = 0
                     if len(source)==0:
                         break
             path_str = path_str + ('' if idx==0 else '/') + source[val]['label']
             self.data['type'] = source[val]['type']
-            self.data['current_folder_layer'] = self.current_folder_layer
             if 'items' in source[val]:
                 source = source[val]['items']
                 self.data['items'] = source
+                list_item = {}
+                for idy, item in enumerate(self.data['items']):
+                    if item['type'] in list_item:
+                        list_item[item['type']] = list_item[item['type']] + 1
+                    else:
+                        list_item[item['type']] = 1
+                    self.data['items'][idy]['layer'] = layer + 1
+                count_data_items = [{'type':k, 'label':v} for k, v in list_item.items()]
             else:
                 del self.data['items']
                 self.data['content'] = source[val]['content']
                 source = []
         self.data['index'] = index_array
         self.data['label'] = path_str
-        if ConstValue.SKIP.value in self.data:
-            del self.data[ConstValue.SKIP.value]
-        if ConstValue.SKIP.value in data:
-            self.data[ConstValue.SKIP.value] = data[ConstValue.SKIP.value]
+        self.data['layer'] = layer
         if 'index' in data:
             if isinstance(data['index'], list):
                 current_index = data['index'][len(data['index'])-1]
@@ -76,7 +86,15 @@ class Model:
             current_index = index_array[len(index_array)-1]
         data = self.data.copy()
         data['index'] = current_index
-        pub.sendMessage("data_changed", data=data)
+        count_data = data.copy()
+        if 'action' not in data or data['action'] == ActionType.NONE.value:
+            if 'items' in data:
+                pub.sendMessage(self.event_name[0], data=data)
+        if 'action' in data and data['action'] == ActionType.COUNTING.value:
+            if data['type'] == PanelType.SECTION.value:
+                count_data['items'] = count_data_items
+            count_data['clickable'] = False
+            pub.sendMessage(self.event_name[1], data=count_data)
 
 class Controller:
     def __init__(self):
@@ -85,15 +103,18 @@ class Controller:
         self.frame = FrameView(None, title = 'math content manager', size=self.size)
         self.panel = wx.Panel(self.frame, size=self.size)
 
+        pub.subscribe(self.changeData, 'data_changing')
+        
         self.tree = TreeView(self.panel, self.model.ori_data)
         self.toolbarPanel = ToolBarView(self.panel, self.model.data)
-
-        self.rightTopPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/3), data=self.model.data)      
   
-        self.rightBottomPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, self.frame.Size.height/2), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/2-40), data=self.model.data, is_count_total=True)
+        counting_data = self.model.data.copy()
+        counting_data['items'] = []
+        counting_data['clickable'] = False
+        self.rightBottomPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, self.frame.Size.height/2), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/2-40), data=counting_data, event_name=self.model.event_name[1])
         self.frame.show(True)
 
-        pub.subscribe(self.changeData, 'data_changing')
+        self.rightTopPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/3), data=self.model.data, event_name=self.model.event_name[0])
 
     def changeData(self, data):
         self.model.updateItem(data)
