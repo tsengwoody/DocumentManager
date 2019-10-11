@@ -32,7 +32,7 @@ class Model:
 
     def updateItem(self, data):
         index_array = self.data['index']
-        layer = data['layer'] if 'layer' in data else 0
+        layer = data['layer'] if 'layer' in data else self.data['layer']
         if 'action' in data:
             self.data['action'] = data['action']
         elif 'action' in self.data:
