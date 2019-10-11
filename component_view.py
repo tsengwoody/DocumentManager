@@ -143,7 +143,7 @@ class SectionPanel(wx.Panel):
                 _type = data['type']
                 label = data['label']
         data['layer'] = self.data['layer']+1
-        if action==ActionType.NONE.value and self.data['type'] == PanelType.SECTION.value:
+        if action==ActionType.NONE.value and _type == PanelType.SECTION.value:
             pub.sendMessage("data_changing", data={'type': PanelType.SECTION.value, 'layer': data['layer'], 'index': index, 'label': label})
         else:
             pub.sendMessage("data_changing", data={'type': _type, 'layer': data['layer'], 'index': index, 'label': label, 'action':action})

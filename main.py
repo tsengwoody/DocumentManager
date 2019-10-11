@@ -55,6 +55,7 @@ class Model:
                 elif 'action' in data and data['action'] == ActionType.DEL.value:
                     del source[val]
                     val = 0
+                    index_array[len(index_array)-1] = val
                     if len(source)==0:
                         break
             path_str = path_str + ('' if idx==0 else '/') + source[val]['label']
