@@ -291,12 +291,10 @@ class TextPanel(wx.Panel):
 
     def modelBindView(self):
         """Model 資料放回至 View 中"""
-        self.contentText.SetValue(self.content)
-        self.data['content'] = self.content
+        self.contentText.SetValue(''.join(self.content))
 
     def viewBindModel(self):
         self.content = self.contentText.GetValue()
-        self.data['content'] = self.content
 
     def buttonData(self):
         return (
@@ -363,14 +361,14 @@ class MathmlPanel(wx.Panel):
         self.SetSizer(self.bsizer)
 
     def MathmlToTree(self):
-
-        self.mathmlObj = parse(self.content)
-        for rootMathObj in self.mathmlObj:
-            rootId = self.treeArea.AddRoot(
-                text=rootMathObj.tag,
-                data=rootMathObj
-            )
-            self._recursive(rootMathObj, rootId)
+        if self.content:
+            self.mathmlObj = parse(self.content)
+            for rootMathObj in self.mathmlObj:
+                rootId = self.treeArea.AddRoot(
+                    text=rootMathObj.tag,
+                    data=rootMathObj
+                )
+                self._recursive(rootMathObj, rootId)
 
 
     def _recursive(self, obj, rootId):

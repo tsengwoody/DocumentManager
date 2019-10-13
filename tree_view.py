@@ -17,11 +17,22 @@ class TreeView(wx.TreeCtrl):
         self.fileMenu = fileMenuView(self)
         self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
         self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
+        self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown, self)
         #self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
         self.root = self.AddRoot("root") 
         pub.subscribe(self.setData, "data_changedTree")
         self.setData(data)
+
+    def onKeyDown(self, event):
+        keycode = event.GetKeyCode()
+        # 13 is Enter 
+        if keycode == 13:
+            item = self.GetFocusedItem()
+            self.active_item(event, item)
+        if keycode == wx.WXK_F2:
+            self.fileMenu.onUpdate(event)
+        event.Skip()
 
     def onLeftMouseDown(self, event):
         item, flags = self.HitTest(event.GetPosition())

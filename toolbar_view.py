@@ -82,11 +82,18 @@ class fileMenuView(wx.Menu):
     # FolderPanel
     # FolderPanel Update 按鈕觸發事件
     def onUpdate(self, event):
-        lst = self.parent.panelItem.getList()
-        item = lst.GetFocusedItem()
-        if item < 0:
-            event.Skip()
-            return
+        if hasattr(self.parent, 'panelItem'):
+            lst = self.parent.panelItem.getList()
+            item = lst.GetFocusedItem()
+            if item < 0:
+                event.Skip()
+                return
+        else:
+            lst = self.parent
+            item = lst.GetFocusedItem()
+            if item.ID is None:
+                event.Skip()
+                return
 
         event = wx.PyCommandEvent(wx.EVT_LIST_BEGIN_LABEL_EDIT.typeId,self.menu_update.GetId())
         wx.PostEvent(lst, event)
