@@ -50,16 +50,23 @@ class fileMenuView(wx.Menu):
         message = "確認是否刪除?"
         dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.CANCEL | wx.ICON_QUESTION)
         if dlg.ShowModal() == wx.ID_OK:
+            lst = None
             if hasattr(parent, 'panelItem') and isinstance(parent.panelItem, wx.Panel):
                 lst = parent.panelItem.getList()
-            elif isinstance(parent, wx.TreeCtrl):
-                lst = parent.GetImageList()
+            item = -1
             if lst is not None:
-                item = lst.GetFocusedItem()
+                if hasattr(lst, "GetFocusedItem"):
+                    item = lst.GetFocusedItem()
                 if item != -1:
                     pub.sendMessage("data_changing", data={'action': ActionType.DEL.value})
                     lst.DeleteItem(item)
                     lst.Select(0)
+                    return True
+            elif isinstance(parent, wx.TreeCtrl):
+                item = parent.GetFocusedItem()
+                pyData = parent.GetItemData(item)
+                if item != -1 and pyData is not None:
+                    pub.sendMessage("data_changing", data={'action': ActionType.DEL.value, 'layer': pyData[1], 'index': pyData[2][pyData[1]], 'items':[]})
                     return True
             return False
 
