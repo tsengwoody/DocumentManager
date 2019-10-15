@@ -39,8 +39,10 @@ class Model:
             del self.data['action'] 
         count_data_items = []
         if 'index' in data:
+            # from tree_view.py
             if isinstance(data['index'], list):
                 index_array = data['index']
+            # from panels_view.py
             else:
                 index_array.insert(layer, data['index'])
             del index_array[layer+1:]
@@ -91,9 +93,12 @@ class Model:
         if 'action' not in data or data['action'] == ActionType.NONE.value:
             if 'items' in data:
                 pub.sendMessage(self.event_name[0], data=data)
-        if 'action' in data and data['action'] == ActionType.COUNTING.value:
-            if data['type'] == PanelType.SECTION.value:
-                count_data['items'] = count_data_items
+        if 'action' in data:
+            if data['action'] == ActionType.COUNTING.value:
+                if data['type'] == PanelType.SECTION.value:
+                    count_data['items'] = count_data_items
+            elif data['action'] == ActionType.DEL.value:
+                pub.sendMessage('data_changedTree', data=self.ori_data)
             count_data['clickable'] = False
             pub.sendMessage(self.event_name[1], data=count_data)
 
@@ -108,14 +113,18 @@ class Controller:
         
         self.tree = TreeView(self.panel, self.model.ori_data)
         self.toolbarPanel = ToolBarView(self.panel, self.model.data)
-  
+
+        ori_data = self.model.data.copy()
         counting_data = self.model.data.copy()
         counting_data['items'] = []
         counting_data['clickable'] = False
+
+        self.rightTopPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/3), data=self.model.data, event_name=self.model.event_name[0])
+        
         self.rightBottomPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, self.frame.Size.height/2), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/2-40), data=counting_data, event_name=self.model.event_name[1])
         self.frame.show(True)
 
-        self.rightTopPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/3), data=self.model.data, event_name=self.model.event_name[0])
+        self.rightTopPanel.setData(ori_data)
 
     def changeData(self, data):
         self.model.updateItem(data)

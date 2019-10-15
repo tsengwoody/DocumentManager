@@ -26,8 +26,8 @@ class TreeView(wx.TreeCtrl):
 
     def onKeyDown(self, event):
         keycode = event.GetKeyCode()
-        # 13 is Enter 
-        if keycode == 13:
+        WXK_ENTER = 13
+        if keycode == WXK_ENTER:
             item = self.GetFocusedItem()
             self.active_item(event, item)
         if keycode == wx.WXK_F2:
