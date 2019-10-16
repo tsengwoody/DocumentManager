@@ -57,7 +57,7 @@ class Model:
                 elif 'action' in data and data['action'] == ActionType.DEL.value:
                     del source[val]
                     val = 0
-                    index_array[len(index_array)-1] = val
+                    index_array[-1] = val
                     if len(source)==0:
                         break
             path_str = path_str + ('' if idx==0 else '/') + source[val]['label']
@@ -78,15 +78,16 @@ class Model:
                 self.data['content'] = source[val]['content']
                 source = []
         self.data['index'] = index_array
+        self.data['index_array'] = index_array
         self.data['label'] = path_str
         self.data['layer'] = layer
         if 'index' in data:
             if isinstance(data['index'], list):
-                current_index = data['index'][len(data['index'])-1]
+                current_index = data['index'][-1]
             else:
                 current_index = data['index']
         else:
-            current_index = index_array[len(index_array)-1]
+            current_index = index_array[-1]
         data = self.data.copy()
         data['index'] = current_index
         count_data = data.copy()

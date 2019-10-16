@@ -164,16 +164,19 @@ class ToolBarView(wx.Panel):
 
     def setData(self, data):
         try:
-            layer = data['layer']
-            self.index_array.insert(layer,data['index'])
-            del self.index_array[layer+1:] 
+            if 'index_array' in data:
+                self.index_array = data['index_array'].copy()
+            else:
+                layer = data['layer']
+                self.index_array.insert(layer,data['index'])
+                del self.index_array[layer+1:] 
+            self.data = data
             self.pathText.SetLabel(data['label'])
         except AttributeError:
             print("there is no created pathText")
 
     def backPath(self, event):
         print("back to previous path")
-        if len(self.index_array) > 2:
+        if len(self.index_array) >= 1:
             self.index_array.pop()
-            self.index_array.pop()
-            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'layer': self.data['layer']-2,'index': self.index_array[-1]})
+            pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'layer': self.data['layer']-1,'index': self.index_array})
