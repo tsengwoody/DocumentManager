@@ -15,10 +15,10 @@ useNotifyByWriteFile(sys.stdout)
 
 # the following two modules don't know about each other yet will
 # exchange data via pubsub:
-from frame_view import FrameView
-from panels_view import PanelView
-from toolbar_view import ToolBarView
-from tree_view import TreeView
+from View.frame_view import FrameView
+from View.panels_view import PanelView
+from View.toolbar_view import ToolBarView
+from View.tree_view import TreeView
 from enums import InputType, PanelType, ActionType
 from fakedata import documents
 

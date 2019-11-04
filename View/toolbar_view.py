@@ -3,8 +3,8 @@ from pubsub import pub
 
 from enums import ImageIdEnum, InputType, ActionType
 from asciimathml import parse
-from dialog import NewItemDialog
-from component_view import SectionPanel, TextPanel, MathmlPanel
+from Component.dialog import NewItemDialog
+from View.component_view import SectionPanel, TextPanel, MathmlPanel
 
 class fileMenuView(wx.Menu):
     def __init__(self, parent):

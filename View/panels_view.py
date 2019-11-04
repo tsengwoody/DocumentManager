@@ -2,8 +2,8 @@ import wx
 from pubsub import pub
 
 from enums import ImageIdEnum, InputType, PanelType
-from toolbar_view import fileMenuView
-from component_view import SectionPanel, TextPanel, MathmlPanel
+from View.toolbar_view import fileMenuView
+from View.component_view import SectionPanel, TextPanel, MathmlPanel
 
 # Debug
 import pprint

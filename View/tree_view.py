@@ -1,5 +1,5 @@
 ﻿import wx
-from toolbar_view import fileMenuView
+from View.toolbar_view import fileMenuView
 from pubsub import pub
 from enums import InputType
 

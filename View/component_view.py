@@ -2,6 +2,7 @@ import wx
 from pubsub import pub
 
 from enums import ImageIdEnum, InputType, PanelType, ActionType
+from View.html_view import HtmlPanel
 from asciimathml import parse
 # ==========================================================================================
 # SectionPanel
@@ -332,15 +333,16 @@ class MathmlPanel(wx.Panel):
 
     def __init__(self, parent, title, content, _type, data, eventParent):
         wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
+        self.html_panel = HtmlPanel(parent=self, title=title, content=content, _type=_type, data=data, eventParent=self)
         self.name = title
         self.content = content
         self.data = data
         self.type = _type
         self.buttons = []
-        self.treeArea = wx.TreeCtrl(
-            self, id=-1, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.EXPAND
-        )
-        self.MathmlToTree()
+        #self.treeArea = wx.TreeCtrl(
+        #    self, id=-1, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.EXPAND
+        #)
+        #self.MathmlToTree()
 
 
         self.button_panel = wx.Panel(self)
@@ -355,7 +357,7 @@ class MathmlPanel(wx.Panel):
         self.button_panel.Fit()
 
         self.bsizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.bsizer.Add(self.treeArea, 1, wx.EXPAND|wx.ALL, border=5)
+        self.bsizer.Add(self.html_panel, 1, wx.EXPAND|wx.ALL, border=5)
         self.bsizer.Add(self.button_panel, 0, wx.EXPAND|wx.ALL)
 
         self.SetSizer(self.bsizer)
