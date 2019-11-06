@@ -1,3 +1,10 @@
+## DocumentManager
+### How to install and start
+- pipenv shell
+- pipenv install
+- py main.py
+
+## SPEC
 ### 主要為提供一文件內容管理功能，文件內容有不同類型，依類型顯示與操作亦有所差異
 #### 文件資料夾管理(左側)
 - 左側以樹狀結構呈現資料夾項目與其層級關系
