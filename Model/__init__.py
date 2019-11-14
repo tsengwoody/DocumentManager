@@ -1,4 +1,4 @@
-from pubsub import pub
+ï»¿from pubsub import pub
 from fakedata import documents
 from enums import PanelType, ActionType
 
@@ -90,40 +90,40 @@ class Model:
 
 class Model2:
 	"""
-		¨C¦¸§ó·s¬Ò»İµo°e¥H¤U¸ê®Æµ¹ UI Åã¥Ü¡A»İÃB¥~¥[ index_path ¸ê°T¡A¥H«K UI ¾Ş§@®É¶Ç°Tµ¹ model
-		current folder ¡G¥k¤W·í«e¸ê®Æ§¨¤º®e
-		folder filter ¡G¥ª°¼¸ê®Æ§¨¾ğ
-		path ¡G¸ô®|
-		raw data ¡G¿ï©wª«¥óªº­ì©l¸ê®Æ
-		html data ¡G¿ï©wª«¥óªºÂà´« html ¸ê®Æ
+		æ¯æ¬¡æ›´æ–°çš†éœ€ç™¼é€ä»¥ä¸‹è³‡æ–™çµ¦ UI é¡¯ç¤ºï¼Œéœ€é¡å¤–åŠ  index_path è³‡è¨Šï¼Œä»¥ä¾¿ UI æ“ä½œæ™‚å‚³è¨Šçµ¦ model
+		current folder ï¼šå³ä¸Šç•¶å‰è³‡æ–™å¤¾å…§å®¹
+		folder filter ï¼šå·¦å´è³‡æ–™å¤¾æ¨¹
+		path ï¼šè·¯å¾‘
+		raw data ï¼šé¸å®šç‰©ä»¶çš„åŸå§‹è³‡æ–™
+		html data ï¼šé¸å®šç‰©ä»¶çš„è½‰æ› html è³‡æ–™
 	"""
 
 	def __init__(self):
 		self.ori_data = documents
 
-		# index_path ©ñ¤J³v¼hªº¯Á¤Ş¶µ¨Ó«ü¨ì¯S©wª«¥ó
-		# ³Ì«á¤@¶µ¥i¬° -1 ¥NªíµL¿ï¨ú¶µ¥Ø
+		# index_path æ”¾å…¥é€å±¤çš„ç´¢å¼•é …ä¾†æŒ‡åˆ°ç‰¹å®šç‰©ä»¶
+		# æœ€å¾Œä¸€é …å¯ç‚º -1 ä»£è¡¨ç„¡é¸å–é …ç›®
 		self.index_path = [0]
 
 	def current_folder(self):
 		"""
 			return: {
 				'index_path': [0,1,1],
-				'data': {...}, # ·í«e¸ê®Æ§¨ªº¸ê®Æ¡A»İ§t index_path
+				'data': {...}, # ç•¶å‰è³‡æ–™å¤¾çš„è³‡æ–™ï¼Œéœ€å« index_path
 			}
-		""""
+		"""
 		pass
 
 	def folder_filter(self):
 		"""
 			return: [
 				{
-					'index_path': [0,1,1], # ¸`ÂIªº index_path
-					'label': '', # ¸`ÂIªºÅã¥Ü label
-					'items': [...], # ¤l¸`ÂI
+					'index_path': [0,1,1], # ç¯€é»çš„ index_path
+					'label': '', # ç¯€é»çš„é¡¯ç¤º label
+					'items': [...], # å­ç¯€é»
 				}, ...
 			]
-		""""
+		"""
 		pass
 
 	def path(self):
@@ -133,55 +133,55 @@ class Model2:
 		"""
 			return: {
 				'index_path': [0,1,1],
-				'data': {...}, # ¿ï©wª«¥óªº raw
+				'data': {...}, # é¸å®šç‰©ä»¶çš„ raw
 			}
-		""""
+		"""
 		pass
 
 	def html_data(self):
 		"""
 			return: {
 				'index_path': [0,1,1],
-				'data': {...}, # ¿ï©wª«¥óªº html
+				'data': {...}, # é¸å®šç‰©ä»¶çš„ html
 			}
-		""""
+		"""
 		pass
 
-	# === ¾Ş§@­×§ï¸ê®Æ ===
+	# === æ“ä½œä¿®æ”¹è³‡æ–™ ===
 	def set_path(self, data):
 		"""
-			¸ê®Æ®æ¦¡¡Gdata: {
-				'index_path': [0,1,1], # ­n©ñ¤Jªº¦ì¸m
+			è³‡æ–™æ ¼å¼ï¼šdata: {
+				'index_path': [0,1,1], # è¦æ”¾å…¥çš„ä½ç½®
 			}
-			§PÂ_¡G¦pªG index_path ¬°¤£¦s¦bªº index «h raise exception
-		""""
+			åˆ¤æ–·ï¼šå¦‚æœ index_path ç‚ºä¸å­˜åœ¨çš„ index å‰‡ raise exception
+		"""
 		self.index_path = data['index_path']
 
 	def add(self, data):
 		"""
-			¸ê®Æ®æ¦¡¡Gdata: {
-				'index_path': [0,1,1], # ­n©ñ¤Jªº¦ì¸m
-				'data': {...}, # ­n©ñ¤Jªº¸ê®Æ
+			è³‡æ–™æ ¼å¼ï¼šdata: {
+				'index_path': [0,1,1], # è¦æ”¾å…¥çš„ä½ç½®
+				'data': {...}, # è¦æ”¾å…¥çš„è³‡æ–™
 			}
-			§PÂ_¡G¦pªG index_path °£³Ì«á¤@­Ó¥~¦³¤£¦s¦bªº index «h raise exception
-		""""
+			åˆ¤æ–·ï¼šå¦‚æœ index_path é™¤æœ€å¾Œä¸€å€‹å¤–æœ‰ä¸å­˜åœ¨çš„ index å‰‡ raise exception
+		"""
 		pass
 
 	def update(self, data):
 		"""
 			data: {
-				'index_path': [0,1,1], # ­n§ó·sªº¦ì¸m
-				'data': {...}, # ­n§ó·sªº¸ê®Æ
+				'index_path': [0,1,1], # è¦æ›´æ–°çš„ä½ç½®
+				'data': {...}, # è¦æ›´æ–°çš„è³‡æ–™
 			}
-			§PÂ_¡G¦pªG index_path ¦³¤£¦s¦bªº index «h raise exception
-		""""
+			åˆ¤æ–·ï¼šå¦‚æœ index_path æœ‰ä¸å­˜åœ¨çš„ index å‰‡ raise exception
+		"""
 		pass
 
 	def remove(self, data):
 		"""
 			data: {
-				'index_path': [0,1,1], # ­n§R°£ªº¦ì¸m
+				'index_path': [0,1,1], # è¦åˆªé™¤çš„ä½ç½®
 			}
-			§PÂ_¡G¦pªG index_path ¦³¤£¦s¦bªº index «h raise exception
-		""""
+			åˆ¤æ–·ï¼šå¦‚æœ index_path æœ‰ä¸å­˜åœ¨çš„ index å‰‡ raise exception
+		"""
 		pass
