@@ -13,19 +13,19 @@ import sys
 
 useNotifyByWriteFile(sys.stdout)
 
-# the following two modules don't know about each other yet will
+# the following modules don't know about each other yet will
 # exchange data via pubsub:
 from View.frame_view import FrameView
 from View.panels_view import PanelView
 from View.toolbar_view import ToolBarView
 from View.tree_view import TreeView
-from Model.models import Model
+from Model.model import Model
 from enums import InputType, PanelType, ActionType
 
 class Controller:
     def __init__(self):
         self.size = wx.Size(1000, 400)
-        self.model = Model()
+        self.model = Model(self)
         self.frame = FrameView(None, title = 'math content manager', size=self.size)
         self.panel = wx.Panel(self.frame, size=self.size)
 
@@ -48,6 +48,9 @@ class Controller:
 
     def changeData(self, data):
         self.model.updateItem(data)
+    
+    def sendMessage(self, event, data):
+        pub.sendMessage(event, data=data)
 
 
 if __name__ == "__main__":

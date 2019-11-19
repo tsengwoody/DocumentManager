@@ -1,4 +1,3 @@
-﻿from pubsub import pub
 from fakedata import documents
 from enums import PanelType, ActionType
 
@@ -6,10 +5,11 @@ from enums import PanelType, ActionType
 # index: current item index number in a layer
 
 class Model:
-	def __init__(self):
+	def __init__(self, controller):
 		self.ori_data = {'items': documents}
 		self.data = {'items': documents[0]['items'], 'index':[0], 'layer': 0, 'label':documents[0]['label'], 'type':documents[0]['type']}
 		self.event_name = ['data_changed', 'count_changed']
+		self.controller = controller
 
 	def count_item(self):
 		list_item = {}
@@ -78,15 +78,15 @@ class Model:
 		count_data = data.copy()
 		if 'action' not in data or data['action'] == ActionType.NONE.value:
 			if 'items' in data:
-				pub.sendMessage(self.event_name[0], data=data)
+				self.controller.sendMessage(self.event_name[0], data=data)
 		if 'action' in data:
 			if data['action'] == ActionType.COUNTING.value:
 				if data['type'] == PanelType.SECTION.value:
 					count_data['items'] = count_data_items
 			elif data['action'] == ActionType.DEL.value:
-				pub.sendMessage('data_changedTree', data=self.ori_data)
+				self.controller.sendMessage('data_changedTree', data=self.ori_data)
 			count_data['clickable'] = False
-			pub.sendMessage(self.event_name[1], data=count_data)
+			self.controller.sendMessage(self.event_name[1], data=count_data)
 
 class Model2:
 	"""
