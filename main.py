@@ -19,7 +19,7 @@ from View.frame_view import FrameView
 from View.panels_view import PanelView
 from View.toolbar_view import ToolBarView
 from View.tree_view import TreeView
-from Model import Model
+from Model.models import Model
 from enums import InputType, PanelType, ActionType
 
 class Controller:
