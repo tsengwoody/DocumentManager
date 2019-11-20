@@ -8,7 +8,7 @@ use-pycodestyle-indent = True
 # Reporting
 statistics = True
 doctests = True
-show-source = False
+show-source = True
 
 # Options
 max-complexity = 15
