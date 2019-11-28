@@ -35,4 +35,6 @@ for event, func in fs.items():
 	pub.subscribe(func, event)
 
 print('after subscribe')
-model.set_index_path({'index_path': [0, 0, 2]})
+model.set_index_path({'index_path': [1, -1]})
+print(model.sections)
+print(getattr(model, 'current_section')['index_path'])

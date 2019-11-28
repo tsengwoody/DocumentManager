@@ -25,14 +25,19 @@ class Model2:
 
 	def get_node_by_index_path(self, index_path):
 		pointer = None
+		for node in self.visit_node_by_index_path(index_path):
+			pointer = node
+		return pointer
+
+	def visit_node_by_index_path(self, index_path):
+		pointer = None
 		for i, index in enumerate(index_path):
 			# 特例，最上層為一個多文件的 list
 			if i == 0:
-				pointer = self.data[i]
+				pointer = self.data[index]
 			else:
 				pointer = pointer['items'][index]
-
-		return pointer
+			yield pointer
 
 	@classmethod
 	def set_descendant_index_path(cls, node, index_path):
@@ -41,6 +46,20 @@ class Model2:
 			for index, child in enumerate(node['items']):
 				child_index_path = index_path + [index]
 				cls.set_descendant_index_path(child, child_index_path)
+
+	def get_descendant_sections(cls, node):
+		child_sections = []
+		if node['type'] == 'section':
+			for child in node['items']:
+				if child['type'] == 'section':
+					child_sections.append(cls.get_descendant_sections(child))
+
+
+		return {
+			'index_path': node['index_path'],
+			'label': node['label'],
+			'items': child_sections,
+		}
 
 	@property
 	def current_section(self):
@@ -66,18 +85,15 @@ class Model2:
 				}, ...
 			]
 		"""
-		pass
+		return [
+			self.get_descendant_sections(self.data[i]) for i in range(len(self.data))
+		]
 
 	@property
 	def path(self):
 		path = []
-		for i, index in enumerate(self.index_path[:-1]):
-			# 特例，最上層為一個多文件的 list
-			if i == 0:
-				pointer = self.data[i]
-			else:
-				pointer = pointer['items'][index]
-			path.append(pointer['label'])
+		for node in self.visit_node_by_index_path(self.index_path[:-1]):
+			path.append(node['label'])
 
 		return '/'.join(path)
 
@@ -120,6 +136,7 @@ class Model2:
 			try:
 				pub.sendMessage(event, data=getattr(self, event))
 			except BaseException as e:
+				print(event)
 				print('error:', str(e))
 
 	def add(self, data):
