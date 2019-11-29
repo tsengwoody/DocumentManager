@@ -35,8 +35,7 @@ class DocumentManagerApp:
 		for event, func in model_function.items():
 			pub.subscribe(func, event)
 
-		pub.sendMessage('set_index_path', data={'index_path': [1, 4, 0]})
-		print(self.model.path)
+		self.model.set_index_path({'index_path': [0, -1]})
 
 		self.view = View(self.model)
 
@@ -51,6 +50,8 @@ class DocumentManagerApp:
 
 		for event, func in view_function.items():
 			pub.subscribe(func, event)
+
+		pub.sendMessage('set_index_path', data={'index_path': [0, -1]})
 
 if __name__ == "__main__":
 	app = wx.App()

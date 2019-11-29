@@ -21,8 +21,8 @@ class TreeView2(wx.TreeCtrl):
 		#self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
 		self.root = self.AddRoot("root") 
-		pub.subscribe(self.setData, "data_changedTree")
-		self.setData(data)
+		self.setData(data.sections)
+		self.model = data
 
 	def onKeyDown(self, event):
 		keycode = event.GetKeyCode()
@@ -41,18 +41,15 @@ class TreeView2(wx.TreeCtrl):
 	def onSelChanged(self, event):
 		item = event.GetItem()
 		self.active_item(event, item)
-	
+
 	def active_item(self, event, item):
 		self.fileMenu.RemoveAll()
 		if item.ID is not None:
 			self.fileMenu.InitOverItemMenu()
 			pyData = self.GetItemData(item)
-			level = pyData[1]
-			index_array = pyData[2]
-			if index_array is not None and index_array[0] != wx.NOT_FOUND: 
-				self.SelectItem(item)	   
-				label = self.GetItemText(item)
-				pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'index': index_array, 'label': label, 'layer': level})
+			self.SelectItem(item)	   
+			self.model.set_index_path({'index_path': pyData['index_path'] +[-1]})
+			#pub.sendMessage('set_index_path', data={'index_path': pyData['index_path'] +[-1]})
 
 	def onItemRightClick(self, event):
 		item, flags = self.HitTest(event.GetPosition())
@@ -73,25 +70,22 @@ class TreeView2(wx.TreeCtrl):
 		event.Skip()
 
 	def setData(self, data):
-		items = data['items']
 		self.DeleteAllItems()
-		print("tree data:", items)
-		self.expandChild(self.root, 0, [], items)
-		self.ExpandAll()
+		self.expandChild(self.root, data)
+		#self.ExpandAll()
 
-	def expandChild(self, parent, level, index_array, data=[]):
+	def expandChild(self, parent, data):
 		if data is None or len(data) == 0:
 			return False
 		else:
 			for index, item in enumerate(data):
-				if 'items' in item:
-					_index_array = index_array.copy()
+				#if 'items' in item:
 					label = item['label']
+					index_path = item['index_path']
 					childID = self.AppendItem(parent, label, 0)
-					_index_array.insert(level, index)
-					self.SetPyData(childID, (label, level, _index_array))
-					self.expandChild(childID, level+1, _index_array.copy(), item['items'])
-					self.Expand(childID)
+					self.SetPyData(childID, item)
+					self.expandChild(childID, item['items'])
+					#self.Expand(childID)
 
 
 class TreeView(wx.TreeCtrl):
@@ -166,7 +160,6 @@ class TreeView(wx.TreeCtrl):
 	def setData(self, data):
 		items = data['items']
 		self.DeleteAllItems()
-		print("tree data:", items)
 		self.expandChild(self.root, 0, [], items)
 		self.ExpandAll()
 
