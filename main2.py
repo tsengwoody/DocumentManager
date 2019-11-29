@@ -23,6 +23,8 @@ def show(data):
 class DocumentManagerApp:
 	def __init__(self):
 		self.model = Model()
+		self.view = View(self.model)
+		self.model.set_index_path({'index_path': [0, -1]})
 
 		# subscribe for model
 		model_function = {
@@ -34,10 +36,6 @@ class DocumentManagerApp:
 
 		for event, func in model_function.items():
 			pub.subscribe(func, event)
-
-		self.model.set_index_path({'index_path': [0, -1]})
-
-		self.view = View(self.model)
 
 		# subscribe for view
 		view_function = {

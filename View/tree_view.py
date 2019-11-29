@@ -22,6 +22,8 @@ class TreeView2(wx.TreeCtrl):
 
 		self.root = self.AddRoot("root") 
 		self.setData(data.sections)
+
+		# 要加這行才能正常用 pub.sendMessage，不限定 self.model 測試 self.model2 也成功
 		self.model = data
 
 	def onKeyDown(self, event):
@@ -48,8 +50,8 @@ class TreeView2(wx.TreeCtrl):
 			self.fileMenu.InitOverItemMenu()
 			pyData = self.GetItemData(item)
 			self.SelectItem(item)	   
-			self.model.set_index_path({'index_path': pyData['index_path'] +[-1]})
-			#pub.sendMessage('set_index_path', data={'index_path': pyData['index_path'] +[-1]})
+			#self.model.set_index_path({'index_path': pyData['index_path'] +[-1]})
+			pub.sendMessage('set_index_path', data={'index_path': pyData['index_path'] +[-1]})
 
 	def onItemRightClick(self, event):
 		item, flags = self.HitTest(event.GetPosition())
@@ -83,7 +85,7 @@ class TreeView2(wx.TreeCtrl):
 					label = item['label']
 					index_path = item['index_path']
 					childID = self.AppendItem(parent, label, 0)
-					self.SetPyData(childID, item)
+					self.SetItemData(childID, item)
 					self.expandChild(childID, item['items'])
 					#self.Expand(childID)
 
