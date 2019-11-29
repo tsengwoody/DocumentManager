@@ -54,7 +54,6 @@ class Model2:
 				if child['type'] == 'section':
 					child_sections.append(cls.get_descendant_sections(child))
 
-
 		return {
 			'index_path': node['index_path'],
 			'label': node['label'],
