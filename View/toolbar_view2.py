@@ -1,19 +1,18 @@
 ﻿import wx
 from pubsub import pub
 from enums import ImageIdEnum, InputType, ActionType
-from asciimathml import parse
 from Component.dialog import NewItemDialog
 from View.component_view import SectionPanel, TextPanel, MathmlPanel
 
 
-class fileMenuView(wx.Menu):
+class fileMenuView2(wx.Menu):
 	def __init__(self, parent):
 		wx.Menu.__init__(self)
 		self.parent = parent
 
 		self.menu_add=self.Append(wx.ID_ANY,  "Add Item")
 		self.Enable(self.menu_add.GetId(), False)
-		self.Bind(wx.EVT_MENU, self.OnAdd, self.menu_add)
+		self.Bind(wx.EVT_MENU, self.onAdd, self.menu_add)
 
 		self.menu_update=self.Append(wx.ID_ANY,  "Update")
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.menu_update)
@@ -102,65 +101,72 @@ class fileMenuView(wx.Menu):
 				event.Skip()
 				return
 
-		event = wx.PyCommandEvent(wx.EVT_LIST_BEGIN_LABEL_EDIT.typeId,self.menu_update.GetId())
-		wx.PostEvent(lst, event)
-		oldPanelName = lst.GetItemText(item)
-		dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=oldPanelName, style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
+		data = lst.GetItemData(item)
+		dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=data['label'], style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
 
 		if dlg.ShowModal() == wx.ID_OK:
-			updatePanelName = dlg.GetValue()
-			lst.SetItemText(item, updatePanelName)
-			pub.sendMessage("data_changing", data={'label': updatePanelName, 'action':ActionType.UPDATE.value})
+			data['label'] = dlg.GetValue()
+			lst.SetItemText(item, data['label'])
+			pub.sendMessage("update", data={
+				'index_path': data['index_path'],
+				'data': {'label': data['label']},
+			})
 
 		dlg.Destroy()
 
 	# FolderPanel Add 按鈕觸發事件
-	def OnAdd(self, event):
-		# TODO 要更改成可以選新增物件的 type
-		"""FolderPanel Add 按鈕觸發事件"""
+	def onAdd(self, event):
+		index_path = []
+		# 點在又上時
+		if hasattr(self.parent, 'panelItem'):
+			lst = self.parent.panelItem.getList()
+			item = lst.GetFocusedItem()
+			if item < 0:
+				index_path = [-1]
+			else:
+				index_path = lst.GetItemData(item)['index_path']
+				index_path = index_path[:-1] + [index_path[-1] + 1]
+		# 點在左側時
+		else:
+			lst = self.parent
+			item = lst.GetFocusedItem()
+			if item.ID is None:
+				index_path = [-1]
+			else:
+				index_path = lst.GetItemData(item)['index_path']
+				index_path = index_path[:-1] + [index_path[-1] + 1]
+
 		dlg = NewItemDialog(self.parent)
 		ret = dlg.ShowModal()
 
-		index = 0 # 一開始沒初始化會跳 error
 		if ret == wx.ID_OK:
-			
-			# TODO 先預設成新增的全部都是 Section
-			title = dlg.newItemName
+			label = dlg.newItemName
 			_type = dlg.newItemType
-			data = []
 
-			if _type == "section":
-				SectionPanel(parent=self.parent, title=title, content=[], _type=_type, data=data, eventParent=self.parent)
-			elif _type == "text":
-				TextPanel(parent=self.parent, title=title, content=[], _type=_type, data=data, eventParent=self.parent)
-			elif _type == "mathml":
-				MathmlPanel(parent=self.parent, title=title, content=[], _type=_type, data=data, eventParent=self.parent)
+			pub.sendMessage("add", data={
+				'index_path': index_path,
+				'data': {'label': label},
+			})
 
-			lst = self.parent.panelItem.getList()
-			index = lst.InsertItem(lst.GetItemCount(), title, ImageIdEnum.typeToEnum(_type))
-			pub.sendMessage("data_changing", data={'label': title, 'type':_type, 'index': index, 'items':data, 'action': ActionType.ADD.value})
-			lst.Focus(index)
-			lst.Select(index)
 		dlg.Destroy()
 
-class ToolBarView(wx.Panel):
+
+class ToolBarView2(wx.Panel):
 	def __init__(self, parent, data):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, pos=(parent.Size.width/4, 0), size=(parent.Size.width*3/4, 69), style = wx.TAB_TRAVERSAL|wx.EXPAND)
 		self.parent = parent
-		self.data = data
-		self.index_array = data['index']
+		self.path = data
 		backPathBitmap = wx.Bitmap("./icons/backPath.png", wx.BITMAP_TYPE_PNG)
 		self.backPathbtn = wx.Button(self, -1, style=wx.BU_BOTTOM | wx.BU_NOTEXT)
 		self.backPathbtn.SetBitmap(backPathBitmap, wx.BOTTOM)
 		self.backPathbtn.SetLabel("上一層")
 		self.toolbar = wx.BoxSizer(wx.VERTICAL)
 		self.toolbar.Add(self.backPathbtn, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, border=5)				   
-		self.pathText = wx.StaticText(self, -1, data['label'], size=(-1, -1), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.BU_NOTEXT)
+		self.pathText = wx.StaticText(self, -1, self.path, size=(-1, -1), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.BU_NOTEXT)
 		self.toolbar.Add(self.pathText, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL)
 		self.SetSizer(self.toolbar)
 		self.Fit()
 		self.backPathbtn.Bind(wx.EVT_BUTTON, self.backPath)
-		pub.subscribe(self.setData, "data_changed")
 
 	def setData(self, data):
 		try:

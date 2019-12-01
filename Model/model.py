@@ -131,7 +131,7 @@ class Model2:
 			判斷：如果 index_path 為不存在的 index 則 raise exception
 		"""
 		self.index_path = data['index_path']
-		for event in ['current_section', 'sections', 'path', 'pointer_raw_data', 'pointer_html_data']:
+		for event in ['current_section', 'path', 'pointer_raw_data', 'pointer_html_data']:
 			try:
 				pub.sendMessage(event, data=getattr(self, event))
 			except BaseException as e:
@@ -146,7 +146,7 @@ class Model2:
 			}
 			判斷：如果 index_path 除最後一個外有不存在的 index 則 raise exception
 		"""
-		pass
+		print(data['index_path'], data['data']['label'])
 
 	def update(self, data):
 		"""
@@ -156,7 +156,14 @@ class Model2:
 			}
 			判斷：如果 index_path 有不存在的 index 則 raise exception
 		"""
-		pass
+		node = self.get_node_by_index_path(data['index_path'])
+		node['label'] = data['data']['label']
+		for event in ['current_section', 'sections', 'path', 'pointer_raw_data', 'pointer_html_data']:
+			try:
+				pub.sendMessage(event, data=getattr(self, event))
+			except BaseException as e:
+				print(event)
+				print('error:', str(e))
 
 	def remove(self, data):
 		"""
