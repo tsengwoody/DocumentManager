@@ -85,6 +85,8 @@ class TreeView2(wx.TreeCtrl):
 
 		item, cookie = self.GetFirstChild(root)
 		while item.IsOk():
+			if self.GetItemData(item)['index_path'] == index_path:
+				return item
 			if self.ItemHasChildren(item):
 				temp = self.GetItemByIndexPath(index_path, item)
 				if temp:
@@ -93,15 +95,16 @@ class TreeView2(wx.TreeCtrl):
 		return None
 
 	def setSelection(self, data):
+		print(data['index_path'])
 		item = self.GetRootItem()
 		while item.IsOk():
 			selection = self.GetItemByIndexPath(data['index_path'], item)
 			if selection:
 				self.SelectItem(selection)
+				self.EnsureVisible(selection)
+				print(self.GetItemData(selection)['label'])
 				break
 			item = self.GetNextSibling(item)
-
-		print(self.GetItemData(selection)['index_path'])
 
 	def setData(self, data):
 		self.DeleteAllItems()

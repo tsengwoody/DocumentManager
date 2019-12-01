@@ -158,7 +158,7 @@ class Model2:
 		"""
 		node = self.get_node_by_index_path(data['index_path'])
 		node['label'] = data['data']['label']
-		for event in ['current_section', 'sections', 'path', 'pointer_raw_data', 'pointer_html_data']:
+		for event in ['sections', 'current_section', 'path', 'pointer_raw_data', 'pointer_html_data']:
 			try:
 				pub.sendMessage(event, data=getattr(self, event))
 			except BaseException as e:
