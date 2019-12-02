@@ -13,7 +13,7 @@ class View:
 		self.size = wx.Size(1000, 400)
 		self.frame = FrameView(None, title='math content manager', size=self.size)
 		self.panel = wx.Panel(self.frame, size=self.size)
-		self.tree = TreeView(self.panel, self.model)
+		self.tree = TreeView(self.panel, self.model.sections)
 		self.toolbarPanel = ToolBarView(self.panel, self.model.path)
 		self.rightTopPanel = RightTopPanel(
 			self.panel, data=self.model.current_section,

@@ -53,5 +53,6 @@ class DocumentManagerApp:
 
 if __name__ == "__main__":
 	app = wx.App()
-	DocumentManagerApp()
+	#實例一定要assign到一個變數，不然會被自動回收
+	d = DocumentManagerApp()
 	app.MainLoop()

@@ -21,10 +21,7 @@ class TreeView2(wx.TreeCtrl):
 		#self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
 		self.root = self.AddRoot("root") 
-		self.setData(data.sections)
-
-		# 要加這行才能正常用 pub.sendMessage，不限定 self.model 測試 self.model2 也成功
-		self.model = data
+		self.setData(data)
 
 	def onKeyDown(self, event):
 		keycode = event.GetKeyCode()
