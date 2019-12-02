@@ -1,8 +1,6 @@
 ﻿import wx
 from pubsub import pub
-from enums import ImageIdEnum, InputType, ActionType
 from Component.dialog import NewItemDialog
-from View.component_view import SectionPanel, TextPanel, MathmlPanel
 
 
 class fileMenuView2(wx.Menu):
@@ -10,41 +8,40 @@ class fileMenuView2(wx.Menu):
 		wx.Menu.__init__(self)
 		self.parent = parent
 
-		self.menu_add=self.Append(wx.ID_ANY,  "Add Item")
-		self.Enable(self.menu_add.GetId(), False)
+		self.menu_add = self.Append(wx.ID_ANY, "Add Item")
 		self.Bind(wx.EVT_MENU, self.onAdd, self.menu_add)
 
-		self.menu_update=self.Append(wx.ID_ANY,  "Update")
+		self.menu_update = self.Append(wx.ID_ANY, "Update")
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.menu_update)
-		
-		self.menu_delete=self.Append(wx.ID_ANY,  "Delete")
+
+		self.menu_delete = self.Append(wx.ID_ANY, "Delete")
 		self.Bind(wx.EVT_MENU, self.OnDelete, self.menu_delete)
 
-		self.menu_import=self.Append(wx.ID_ANY,  "Import")
+		self.menu_import = self.Append(wx.ID_ANY, "Import")
 		self.Enable(self.menu_import.GetId(), False)
 
-		self.menu_export=self.Append(wx.ID_ANY,  "Export")
+		self.menu_export = self.Append(wx.ID_ANY, "Export")
 		self.Bind(wx.EVT_MENU, self.OnExport, self.menu_export)
 
 	def InitOverItemMenu(self):
+		self.Enable(self.menu_add.GetId(), False)
 		self.Enable(self.menu_update.GetId(), True)
 		self.Enable(self.menu_delete.GetId(), True)
-		self.Enable(self.menu_export.GetId(), True)
-		self.Enable(self.menu_add.GetId(), False)
-		self.Enable(self.menu_import.GetId(), False)
+		self.Enable(self.menu_export.GetId(), False)
+		self.Enable(self.menu_import.GetId(), True)
 
 	def InitNoneOverItemMenu(self):
+		self.Enable(self.menu_add.GetId(), True)
 		self.Enable(self.menu_update.GetId(), False)
 		self.Enable(self.menu_delete.GetId(), False)
 		self.Enable(self.menu_export.GetId(), False)
-		self.Enable(self.menu_add.GetId(), True)
 		self.Enable(self.menu_import.GetId(), True)
-		
+
 	def RemoveAll(self):
 		return True
 
 	def OnDelete(self, event):
-		parent = self.parent	
+		parent = self.parent
 		caption = "即將刪除"
 		message = "確認是否刪除?"
 		dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.CANCEL | wx.ICON_QUESTION)
@@ -88,8 +85,8 @@ class fileMenuView2(wx.Menu):
 	# FolderPanel
 	# FolderPanel Update 按鈕觸發事件
 	def onUpdate(self, event):
-		if hasattr(self.parent, 'panelItem'):
-			lst = self.parent.panelItem.getList()
+		if hasattr(self.parent, 'getList'):
+			lst = self.parent.getList()
 			item = lst.GetFocusedItem()
 			if item < 0:
 				event.Skip()
@@ -101,7 +98,7 @@ class fileMenuView2(wx.Menu):
 				event.Skip()
 				return
 
-		data = lst.GetItemData(item)
+		data = lst.GetPyData(item)
 		dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=data['label'], style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
 
 		if dlg.ShowModal() == wx.ID_OK:
@@ -153,36 +150,42 @@ class fileMenuView2(wx.Menu):
 
 class ToolBarView2(wx.Panel):
 	def __init__(self, parent, data):
-		wx.Panel.__init__(self, parent, wx.ID_ANY, pos=(parent.Size.width/4, 0), size=(parent.Size.width*3/4, 69), style = wx.TAB_TRAVERSAL|wx.EXPAND)
+		wx.Panel.__init__(
+			self, parent, wx.ID_ANY,
+			pos=(parent.Size.width / 4, 0), size=(parent.Size.width * 3 / 4, 69),
+			style=wx.TAB_TRAVERSAL | wx.EXPAND
+		)
 		self.parent = parent
-		self.path = data
+
 		backPathBitmap = wx.Bitmap("./icons/backPath.png", wx.BITMAP_TYPE_PNG)
 		self.backPathbtn = wx.Button(self, -1, style=wx.BU_BOTTOM | wx.BU_NOTEXT)
 		self.backPathbtn.SetBitmap(backPathBitmap, wx.BOTTOM)
 		self.backPathbtn.SetLabel("上一層")
+
 		self.toolbar = wx.BoxSizer(wx.VERTICAL)
-		self.toolbar.Add(self.backPathbtn, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, border=5)				   
-		self.pathText = wx.StaticText(self, -1, self.path, size=(-1, -1), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.BU_NOTEXT)
-		self.toolbar.Add(self.pathText, 1, wx.ALIGN_CENTER_VERTICAL|wx.ALL)
+		self.toolbar.Add(self.backPathbtn, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, border=5)
+
+		self.pathText = wx.StaticText(self, -1, data['path'], size=(-1, -1), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.BU_NOTEXT)
+		self.toolbar.Add(self.pathText, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALL)
+
 		self.SetSizer(self.toolbar)
 		self.Fit()
+
 		self.backPathbtn.Bind(wx.EVT_BUTTON, self.backPath)
 
+		self.path = data['path']
+		self.current_section = data['current_section']
+
+		pub.subscribe(self.setPath, 'path')
+		pub.subscribe(self.setData, 'current_section')
+
+	def setPath(self, data):
+		self.path = data
+		self.pathText.SetLabel(data)
+
 	def setData(self, data):
-		try:
-			if 'index_array' in data:
-				self.index_array = data['index_array'].copy()
-			else:
-				layer = data['layer']
-				self.index_array.insert(layer,data['index'])
-				del self.index_array[layer+1:] 
-			self.data = data
-			self.pathText.SetLabel(data['label'])
-		except AttributeError:
-			print("there is no created pathText")
+		self.current_section = data
 
 	def backPath(self, event):
-		print("back to previous path")
-		if len(self.index_array) >= 1:
-			self.index_array.pop()
-			pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'layer': self.data['layer']-1,'index': self.index_array})
+		if len(self.current_section['index_path']) > 1:
+			pub.sendMessage('set_index_path', data={'index_path': self.current_section['index_path'][:-1] + [-1]})

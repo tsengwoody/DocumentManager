@@ -28,10 +28,10 @@ class TreeView2(wx.TreeCtrl):
 		# self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
 		self.root = self.AddRoot("root")
-		self.setData(data.sections)
+		self.setData(data)
 
 		# 要加這行才能正常用 pub.sendMessage，不限定 self.model 測試 self.model2 也成功
-		self.model = data
+		#self.model = data
 
 		pub.subscribe(self.setData, 'sections')
 		pub.subscribe(self.setSelection, 'current_section')
@@ -85,17 +85,13 @@ class TreeView2(wx.TreeCtrl):
 
 		item, cookie = self.GetFirstChild(root)
 		while item.IsOk():
-			if self.GetItemData(item)['index_path'] == index_path:
-				return item
-			if self.ItemHasChildren(item):
-				temp = self.GetItemByIndexPath(index_path, item)
-				if temp:
-					return temp
+			temp = self.GetItemByIndexPath(index_path, item)
+			if temp:
+				return temp
 			item, cookie = self.GetNextChild(root, cookie)
 		return None
 
 	def setSelection(self, data):
-		print(data['index_path'])
 		item = self.GetRootItem()
 		while item.IsOk():
 			selection = self.GetItemByIndexPath(data['index_path'], item)
