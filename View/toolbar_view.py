@@ -102,8 +102,7 @@ class fileMenuView(wx.Menu):
 				event.Skip()
 				return
 
-		event = wx.PyCommandEvent(wx.EVT_LIST_BEGIN_LABEL_EDIT.typeId,self.menu_update.GetId())
-		wx.PostEvent(lst, event)
+
 		oldPanelName = lst.GetItemText(item)
 		dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=oldPanelName, style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
 

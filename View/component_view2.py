@@ -11,6 +11,10 @@ from asciimathml import parse
 # enter 按鍵按下去時 需要 postEvent 到 parent 去更新 FolderPanel 的 PathText
 # ==========================================================================================
 class SectionPanel(wx.Panel):
+
+	def __repr__(self):
+		return f"<SectionPanel Name: {self.name}  Type: {self.type}>"
+
 	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.content = content
@@ -457,9 +461,10 @@ class CurrentSectionPanel(wx.Panel):
 	def exportData(self, event):
 		print("on Export Data!!")
 
-		with wx.FileDialog(self, "Save export file", wildcard="export files (*.json)|*.json",
-					   style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
-
+		with wx.FileDialog(
+			self, "Save export file", wildcard="export files (*.json)|*.json",
+			style = wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+		) as fileDialog:
 			if fileDialog.ShowModal() == wx.ID_CANCEL:
 				return	 # the user changed their mind
 

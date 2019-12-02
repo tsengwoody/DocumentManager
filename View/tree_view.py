@@ -3,7 +3,6 @@ from View.toolbar_view import fileMenuView
 from pubsub import pub
 from enums import InputType
 
-
 class TreeView(wx.TreeCtrl):
 	id = 1
 	def __init__(self, parent, data):

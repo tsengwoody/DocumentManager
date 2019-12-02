@@ -30,9 +30,6 @@ class TreeView2(wx.TreeCtrl):
 		self.root = self.AddRoot("root")
 		self.setData(data)
 
-		# 要加這行才能正常用 pub.sendMessage，不限定 self.model 測試 self.model2 也成功
-		#self.model = data
-
 		pub.subscribe(self.setData, 'sections')
 		pub.subscribe(self.setSelection, 'current_section')
 
