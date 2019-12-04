@@ -1,7 +1,6 @@
-﻿from fakedata import documents
+from fakedata import documents
 from enums import PanelType, ActionType
 from pubsub import pub
-
 
 class Model2:
 	"""
@@ -145,9 +144,35 @@ class Model2:
 				'data': {...}, # 要放入的資料
 			}
 			判斷：如果 index_path 除最後一個外有不存在的 index 則 raise exception
+            
+			筆記：
+			index_path=[0,0,-1]時，在index_path=[0,0]的地方加入data；
+			index_path=[0,0,1] 時，在index_path=[0,0,2]的地方加入data。
 		"""
-		print(data['index_path'], data['data']['label'])
+		# print(data['index_path'], data['data']['label']) #for test purpose only
+		index_path = self.index_path[:-1]
+		node = self.get_node_by_index_path(index_path)
+        
+		# node底下如果沒有'items'時，將node['items']初始化。
+		if 'items' not in node:
+			node['items'] = []
+            
+		# 插入data。
+		if self.index_path[-1] == -1:
+			node['items'].append(data)
+		else:
+			insert_position = index_path[-1]
+			node['items'].insert(insert_position+1,data)
+        
+		# 將結果發布給訂閱者。
+		for event in ['sections', 'current_section', 'path', 'pointer_raw_data', 'pointer_html_data']:
+			try:
+				pub.sendMessage(event, data=getattr(self, event))
+			except BaseException as e:
+				print(event)
+				print('error:', str(e))    
 
+            
 	def update(self, data):
 		"""
 			data: {
@@ -173,7 +198,6 @@ class Model2:
 			判斷：如果 index_path 有不存在的 index 則 raise exception
 		"""
 		pass
-
 
 # layer: current folder layer number in data
 # index: current item index number in a layer
