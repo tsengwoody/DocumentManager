@@ -104,10 +104,11 @@ class Model2:
 				'data': {...}, # 選定物件的 raw
 			}
 		"""
-		return {
-			'index_path': self.index_path if not self.index_path[-1] == -1 else None,
-			'data': self.get_node_by_index_path(self.index_path) if not self.index_path[-1] == -1 else None,
-		}
+		data = {
+			'index_path': self.index_path,
+			'data': self.get_node_by_index_path(self.index_path),
+		} if not self.index_path[-1] == -1 else None
+		return data
 
 	@property
 	def pointer_html_data(self):
@@ -130,8 +131,16 @@ class Model2:
 			}
 			判斷：如果 index_path 為不存在的 index 則 raise exception
 		"""
+		old_index_path = self.index_path
 		self.index_path = data['index_path']
-		for event in ['current_section', 'path', 'pointer_raw_data', 'pointer_html_data']:
+		if not self.index_path[:-1] == old_index_path[:-1]:
+			try:
+				pub.sendMessage('current_section', data=getattr(self, 'current_section'))
+			except BaseException as e:
+				print('current_section')
+				print('error:', str(e))
+
+		for event in ['path', 'pointer_raw_data', 'pointer_html_data']:
 			try:
 				pub.sendMessage(event, data=getattr(self, event))
 			except BaseException as e:
@@ -156,6 +165,7 @@ class Model2:
 			}
 			判斷：如果 index_path 有不存在的 index 則 raise exception
 		"""
+		print(data['index_path'])
 		node = self.get_node_by_index_path(data['index_path'])
 		node['label'] = data['data']['label']
 		for event in ['sections', 'current_section', 'path', 'pointer_raw_data', 'pointer_html_data']:

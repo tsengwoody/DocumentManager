@@ -1,15 +1,20 @@
 ﻿import wx
+import wx.html2 
 from pubsub import pub
 
 from enums import ImageIdEnum, InputType, PanelType, ActionType
-from View.html_view import HtmlPanel
 from asciimathml import parse
-# ==========================================================================================
-# SectionPanel
-# 這邊需要顯示 這個 section 底下有多少的各種物件
-# 例如: 有3個Section物件 、 有2個 Mathml 物件 等等
-# enter 按鍵按下去時 需要 postEvent 到 parent 去更新 FolderPanel 的 PathText
-# ==========================================================================================
+
+
+class HtmlPanel(wx.Panel): 
+	def __init__(self, parent, content):
+		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
+		sizer = wx.BoxSizer(wx.VERTICAL) 
+		self.browser = wx.html2.WebView.New(self)
+		self.browser.SetPage(content['content'], "")
+		sizer.Add(self.browser, 1, wx.EXPAND|wx.ALL, 5) 
+		self.SetSizer(sizer)
+
 class SectionPanel(wx.Panel):
 
 	def __repr__(self):
@@ -65,26 +70,14 @@ class SectionPanel(wx.Panel):
 		self.SetSizer(self.bsizer)
 
 
-# ==========================================================================================
-# TextPanel
-# 這邊需要顯示 Text 物件底下的內容
-# 例如: 有3個Section物件 、 有2個 Mathml 物件 等等
-# Rewrite 時會更改 self.data 裡面的直
-# 讓 未來輸出時可以使用 self.data 輸出
-# ==========================================================================================
-# 這邊應該要 依照不同的 Item Type 設定不同的
 class TextPanel(wx.Panel):
 
 	def __repr__(self):
 		return f"<TextPanel Name: {self.name}  Type: {self.type}>"
 
-	def __init__(self, parent, title, content, _type, data, eventParent):
+	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
-		self.name = title
 		self.content = content
-		self.fileMenu = eventParent.fileMenu
-		self.type = _type
-		self.data = data
 		self.buttons = []
 		self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_READONLY|wx.EXPAND)
 		self.button_panel = wx.Panel(self)
@@ -102,6 +95,8 @@ class TextPanel(wx.Panel):
 		self.bsizer.Add(self.button_panel, 0, wx.EXPAND|wx.ALL)
 
 		self.SetSizer(self.bsizer)
+
+		self.modelBindView()
 
 	def onPanelActivated(self):
 		self.Show()
@@ -124,7 +119,7 @@ class TextPanel(wx.Panel):
 
 	def modelBindView(self):
 		"""Model 資料放回至 View 中"""
-		self.contentText.SetValue(''.join(self.content))
+		self.contentText.SetValue(self.content['data']['content'])
 
 	def viewBindModel(self):
 		self.content = self.contentText.GetValue()
@@ -157,25 +152,20 @@ class TextPanel(wx.Panel):
 		}
 
 
-# 這邊應該要 依照不同的 Item Type 設定不同的
 class MathmlPanel(wx.Panel):
 
 	def __repr__(self):
 		return f"<MathmlPanel Name: {self.name}  Type: {self.type}>"
 
-	def __init__(self, parent, title, content, _type, data, eventParent):
+	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
-		self.html_panel = HtmlPanel(parent=self, title=title, content=content, _type=_type, data=data, eventParent=self)
-		self.name = title
+		self.html_panel = HtmlPanel(parent=self, content=content['data'])
 		self.content = content
-		self.data = data
-		self.type = _type
 		self.buttons = []
 		#self.treeArea = wx.TreeCtrl(
 		#	self, id=-1, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.EXPAND
 		#)
 		#self.MathmlToTree()
-
 
 		self.button_panel = wx.Panel(self)
 		self.createButtonBar(self.button_panel, xPos = 0)
@@ -388,6 +378,19 @@ class CurrentSectionPanel(wx.Panel):
 			self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
 			self.lst.Bind(wx.EVT_RIGHT_DOWN, self.onRightClick)
 
+	def setData(self, data):
+		self.lst.DeleteAllItems()
+		self.current_section = data
+		for item in self.current_section['data']['items']:
+			index = self.current_section['data']['items'].index(item)
+			wxitem = self.lst.InsertItem(index, f"{item['label']}", ImageIdEnum.typeToEnum(item['type']))
+			self.lst.SetPyData(wxitem, {
+				'index_path': item['index_path'],
+				'label': item['label'],
+				'type': item['type'],
+				'content': item['content'] if 'content' in item else '',
+			})
+
 	def getList(self):
 		return self.lst
 
@@ -424,6 +427,8 @@ class CurrentSectionPanel(wx.Panel):
 	def onSelectedItem(self, event):
 		item = event.GetItem()
 		index = item.GetId()
+		data = {'index_path': self.current_section['index_path'] + [index]}
+		pub.sendMessage('set_index_path', data={'index_path': self.current_section['index_path'] + [index]})
 
 	def onRightClick(self, event):
 		self.fileMenu.RemoveAll()
@@ -486,42 +491,38 @@ class RightTopPanel(wx.Panel):
 		self.data = data
 		self.insideItems = wx.BoxSizer(wx.HORIZONTAL)
 		self.SetBackgroundColour( wx.Colour( 112, 186, 248 ) )
+
+		self.panelItem = CurrentSectionPanel(parent=self, data=data)
+		self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)
+		self.panelItem.SetSize(self.Size)
+
 		pub.subscribe(self.setData, 'current_section')
 
 	def setData(self, data):
-		try:
-			self.panelItem.Destroy()
-		except AttributeError:
-			print("there is no created panelItem")
-		self.panelItem = self.updatePanel(data)
-		self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)
-		self.panelItem.SetSize(self.Size)
-		if 'clickable' not in data or data['clickable']==True:
-			if hasattr(self.panelItem, "getList"):
-				lst = self.panelItem.getList()
-				lst.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-				self.SetFocus()
-
-	def updatePanel(self, data):
-		return CurrentSectionPanel(parent=self, data=data)
+		self.panelItem.setData(data)
+		lst = self.panelItem.getList()
+		#lst.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+		lst.SetFocus()
 
 class RightBottomPanel(wx.Panel):
-	def __init__(self, parent, data, pos=(200, 000), size=wx.Size(600, 200), event_name='data_changed'):
+	def __init__(self, parent, data, pos=(200, 000), size=wx.Size(600, 200)):
 		self.fileMenu = fileMenuView(self)
 		wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size, style = wx.BORDER_THEME | wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
-		self.parent = parent
 		self.data = data
-		self.is_set_eventbind = 'clickable' not in data or data['clickable']==True
 		self.insideItems = wx.BoxSizer(wx.HORIZONTAL)
 		self.SetBackgroundColour( wx.Colour( 112, 186, 248 ) )
-		pub.subscribe(self.setData, event_name)
+		pub.subscribe(self.setData, 'pointer_raw_data')
 		self.setData(self.data)
 
 	def setData(self, data):
+		if not data:
+			return False
 		try:
 			self.panelItem.Destroy()
 		except AttributeError:
 			print("there is no created panelItem")
+		except BaseException as e:
+			print(str(e))
 
 		type = data['data']['type']
 		if type == PanelType.SECTION.value:
@@ -538,10 +539,10 @@ class RightBottomPanel(wx.Panel):
 					'label': value,
 					'type': key,
 				})
-		elif _type == PanelType.TEXT.value:
-			pass
-		elif _type == PanelType.MATH.value:
-			pass
+		elif type == PanelType.TEXT.value:
+			content = data
+		elif type == PanelType.MATH.value:
+			content = data
 
 		self.panelItem = self.updatePanel(content=content, _type=type)
 		self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)

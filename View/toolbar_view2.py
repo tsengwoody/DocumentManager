@@ -91,14 +91,17 @@ class fileMenuView2(wx.Menu):
 			if item < 0:
 				event.Skip()
 				return
+			else:
+				data = lst.GetPyData(item)
 		else:
 			lst = self.parent
 			item = lst.GetFocusedItem()
 			if item.ID is None:
 				event.Skip()
 				return
+			else:
+				data = lst.GetItemData(item)
 
-		data = lst.GetPyData(item)
 		dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=data['label'], style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
 
 		if dlg.ShowModal() == wx.ID_OK:

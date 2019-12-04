@@ -1,6 +1,12 @@
 ﻿import wx
 from pubsub import pub
 
+# notification
+from pubsub.utils.notification import useNotifyByWriteFile
+import sys
+
+useNotifyByWriteFile(sys.stdout)
+
 from Model.model import Model2 as Model
 from View.view import View
 
