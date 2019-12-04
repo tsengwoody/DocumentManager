@@ -79,7 +79,8 @@ class TextPanel(wx.Panel):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.content = content
 		self.buttons = []
-		self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_READONLY|wx.EXPAND)
+		#self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_MULTILINE | wx.TE_READONLY | wx.EXPAND)
+		self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_READONLY | wx.EXPAND)
 		self.button_panel = wx.Panel(self)
 
 		self.createButtonBar(self.button_panel, yPos = 0)
@@ -433,12 +434,14 @@ class CurrentSectionPanel(wx.Panel):
 	def onRightClick(self, event):
 		self.fileMenu.RemoveAll()
 		index, flags = self.lst.HitTest(event.GetPosition())
+		if index == wx.NOT_FOUND:
+			index = self.lst.GetFirstSelected()
 		if index != wx.NOT_FOUND:
 			self.fileMenu.InitOverItemMenu()
 			self.lst.Select(index)
 			rect = self.lst.GetItemRect(index)
 			if self.fileMenu.Window is None:
-				self.PopupMenu(self.fileMenu, wx.Point(rect.Left+rect.Width/2, rect.Top+rect.Height/2))		
+				self.PopupMenu(self.fileMenu, wx.Point(rect.Left+rect.Width/2, rect.Top+rect.Height/2))
 		else:
 			self.fileMenu.InitNoneOverItemMenu()
 			if self.fileMenu.Window is None:
@@ -547,11 +550,6 @@ class RightBottomPanel(wx.Panel):
 		self.panelItem = self.updatePanel(content=content, _type=type)
 		self.insideItems.Add(self.panelItem, 1, wx.EXPAND|wx.ALL)
 		self.panelItem.SetSize(self.Size)
-		if 'clickable' not in data or data['clickable']==True:
-			if hasattr(self.panelItem, "getList"):
-				lst = self.panelItem.getList()
-				lst.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-				self.SetFocus()
 
 	def updatePanel(self, content, _type):
 		if _type == PanelType.SECTION.value:

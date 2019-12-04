@@ -59,21 +59,18 @@ class TreeView2(wx.TreeCtrl):
 			pub.sendMessage('set_index_path', data={'index_path': pyData['index_path'] + [-1]})
 
 	def onItemRightClick(self, event):
-		item, flags = self.HitTest(event.GetPosition())
 		self.fileMenu.RemoveAll()
+		item, flags = self.HitTest(event.GetPosition())
+		if item.ID is None:
+			item = self.GetSelection()
 		if item.ID is not None:
 			self.fileMenu.InitOverItemMenu()
-			pyData = self.GetItemData(item)
-			index = pyData[1]
-			if index != wx.NOT_FOUND:
-				self.SelectItem(item)
-				self.active_item(event, item)
-				if self.fileMenu.Window is None:
-					self.PopupMenu(self.fileMenu, event.GetPosition())
+			self.SelectItem(item)
+			#self.active_item(event, item)
 		else:
 			self.fileMenu.InitNoneOverItemMenu()
-			if self.fileMenu.Window is None:
-				self.PopupMenu(self.fileMenu, event.GetPosition())
+		if self.fileMenu.Window is None:
+			self.PopupMenu(self.fileMenu, event.GetPosition())
 		event.Skip()
 
 	def GetItemByIndexPath(self, index_path, root):

@@ -184,6 +184,7 @@ class ToolBarView2(wx.Panel):
 
 	def setPath(self, data):
 		self.path = data
+		print('data:', data)
 		self.pathText.SetLabel(data)
 
 	def setData(self, data):
