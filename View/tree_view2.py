@@ -1,9 +1,8 @@
 import wx
-from View.toolbar_view2 import fileMenuView2 as fileMenuView
 from pubsub import pub
+from Component.utility import Hotkey
 
-
-class TreeView2(wx.TreeCtrl):
+class TreeView2(wx.TreeCtrl, Hotkey):
 	def __init__(self, parent, data):
 		self.panel = wx.Panel(
 			parent, pos=(0, 0),
@@ -21,10 +20,10 @@ class TreeView2(wx.TreeCtrl):
 		docBitmap = wx.Bitmap("./icons/documents.png", wx.BITMAP_TYPE_PNG)
 		il.Add(docBitmap)
 		self.AssignImageList(il)
-		self.fileMenu = fileMenuView(self)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
-		self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
-		self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown, self)
+		#self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
+		Hotkey.__init__(self, self)
+		# self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
 		# self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
 		self.root = self.AddRoot("root")
@@ -32,18 +31,6 @@ class TreeView2(wx.TreeCtrl):
 
 		pub.subscribe(self.setData, 'sections')
 		pub.subscribe(self.setSelection, 'current_section')
-
-	def onKeyDown(self, event):
-		keycode = event.GetKeyCode()
-		WXK_ENTER = 13
-		if keycode == WXK_ENTER:
-			item = self.GetFocusedItem()
-			self.active_item(event, item)
-		if keycode == wx.WXK_F2:
-			self.fileMenu.onUpdate(event)
-		if keycode == wx.WXK_F3:
-			self.fileMenu.onAdd(event)
-		event.Skip()
 
 	def onLeftMouseDown(self, event):
 		item, flags = self.HitTest(event.GetPosition())
@@ -72,6 +59,12 @@ class TreeView2(wx.TreeCtrl):
 		if self.fileMenu.Window is None:
 			self.PopupMenu(self.fileMenu, event.GetPosition())
 		event.Skip()
+
+	def onKeyDown(self, event):
+		super().onKeyDown(event)
+		keycode = event.GetKeyCode()
+		if keycode == WXK_ENTER:
+			self.active_item(event, item)
 
 	def GetItemByIndexPath(self, index_path, root):
 		if self.GetItemData(root)['index_path'] == index_path:

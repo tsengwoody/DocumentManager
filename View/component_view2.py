@@ -1,5 +1,6 @@
 ﻿import wx
-import wx.html2 
+import wx.html2
+from Component.utility import Hotkey
 from pubsub import pub
 
 from enums import ImageIdEnum, InputType, PanelType, ActionType
@@ -311,10 +312,9 @@ class ListCtrl(wx.ListCtrl):
 		event.Skip()
 
 
-class CurrentSectionPanel(wx.Panel):
+class CurrentSectionPanel(wx.Panel, Hotkey):
 	def __init__(self, parent, data):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
-		self.fileMenu = fileMenuView(self)
 		self.current_section = data
 		self.buttons = []
 		self.shift_down = False
@@ -370,14 +370,10 @@ class CurrentSectionPanel(wx.Panel):
 		self.bsizer.Add(self.button_panel, 0, wx.EXPAND|wx.ALL)
 
 		self.SetSizer(self.bsizer)
-
-		if 1:
-			self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
-			self.lst.Bind(wx.EVT_TEXT_ENTER,self.onDBClickItem)
-			self.lst.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
-			self.lst.Bind(wx.EVT_KEY_UP, self.onKeyUp)			
-			self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
-			self.lst.Bind(wx.EVT_RIGHT_DOWN, self.onRightClick)
+		self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
+		self.lst.Bind(wx.EVT_TEXT_ENTER,self.onDBClickItem)	
+		self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
+		Hotkey.__init__(self, self.lst)
 
 	def setData(self, data):
 		self.lst.DeleteAllItems()
@@ -395,29 +391,6 @@ class CurrentSectionPanel(wx.Panel):
 	def getList(self):
 		return self.lst
 
-	def onKeyDown(self, event):
-		keycode = event.GetKeyCode()
-		if keycode == wx.WXK_DELETE:   
-			self.fileMenu.OnDelete(event)
-		if keycode == wx.WXK_F2:
-			self.fileMenu.onUpdate(event)
-		if keycode == wx.WXK_SHIFT:
-			self.shift_down = True
-		if keycode == wx.WXK_CONTROL:
-			self.ctrl_down = True
-		event.Skip()
-
-	def onKeyUp(self, event):
-		keycode = event.GetKeyCode()
-		WXK_N = 78
-		if keycode == wx.WXK_SHIFT:
-			self.shift_down = False
-		if keycode == wx.WXK_CONTROL:
-			self.ctrl_down = False
-		if self.shift_down and self.ctrl_down and keycode == WXK_N:
-			self.fileMenu.OnAdd(event)
-		event.Skip()
-
 	def onDBClickItem(self, event):
 		item = event.GetItem()
 		index = item.GetId()
@@ -430,22 +403,6 @@ class CurrentSectionPanel(wx.Panel):
 		index = item.GetId()
 		data = {'index_path': self.current_section['index_path'] + [index]}
 		pub.sendMessage('set_index_path', data={'index_path': self.current_section['index_path'] + [index]})
-
-	def onRightClick(self, event):
-		self.fileMenu.RemoveAll()
-		index, flags = self.lst.HitTest(event.GetPosition())
-		if index == wx.NOT_FOUND:
-			index = self.lst.GetFirstSelected()
-		if index != wx.NOT_FOUND:
-			self.fileMenu.InitOverItemMenu()
-			self.lst.Select(index)
-			rect = self.lst.GetItemRect(index)
-			if self.fileMenu.Window is None:
-				self.PopupMenu(self.fileMenu, wx.Point(rect.Left+rect.Width/2, rect.Top+rect.Height/2))
-		else:
-			self.fileMenu.InitNoneOverItemMenu()
-			if self.fileMenu.Window is None:
-				self.PopupMenu(self.fileMenu, event.GetPosition())
 
 	def buttonData(self):
 		return (
