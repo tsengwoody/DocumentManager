@@ -61,10 +61,11 @@ class TreeView2(wx.TreeCtrl, Hotkey):
 		event.Skip()
 
 	def onKeyDown(self, event):
-		super().onKeyDown(event)
 		keycode = event.GetKeyCode()
-		if keycode == WXK_ENTER:
+		if keycode == Hotkey.WXK_ENTER:
+			item = self.GetFocusedItem()
 			self.active_item(event, item)
+		super().onKeyDown(event)
 
 	def GetItemByIndexPath(self, index_path, root):
 		if self.GetItemData(root)['index_path'] == index_path:

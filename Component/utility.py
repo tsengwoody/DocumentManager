@@ -1,8 +1,9 @@
 import wx
 from View.toolbar_view2 import fileMenuView2 as fileMenuView
-WXK_N = 78
-WXK_ENTER = 13
+
 class Hotkey(object):
+	WXK_N = 78
+	WXK_ENTER = 13
 	def __init__(self, lst):
 		self.fileMenu = fileMenuView(self)
 		self.lst = lst
@@ -31,8 +32,6 @@ class Hotkey(object):
 
 	def onKeyDown(self, event):
 		keycode = event.GetKeyCode()
-		if keycode == WXK_ENTER and hasattr(self, 'GetFocusedItem'):
-			item = self.GetFocusedItem()
 		if keycode == wx.WXK_DELETE:   
 			self.fileMenu.OnDelete(event)
 		if keycode == wx.WXK_F2:
