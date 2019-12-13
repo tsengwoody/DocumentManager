@@ -1,4 +1,4 @@
-from fakedata import documents
+﻿from fakedata import documents
 from enums import PanelType, ActionType
 from pubsub import pub
 
@@ -238,11 +238,8 @@ class Model2:
 		self.set_descendant_index_path(node, prev_index_path)
         
 		# 將結果發布給訂閱者。
-		self.announcement        
+		self.announcement
 
-
-# layer: current folder layer number in data
-# index: current item index number in a layer
 
 class Model:
 	def __init__(self, controller):

@@ -37,12 +37,10 @@ class TreeView2(wx.TreeCtrl, Hotkey):
 		self.active_item(event, item)
 
 	def active_item(self, event, item):
-		self.fileMenu.RemoveAll()
 		if item.ID is not None:
 			self.fileMenu.InitOverItemMenu()
 			pyData = self.GetItemData(item)
 			self.SelectItem(item)
-			# self.model.set_index_path({'index_path': pyData['index_path'] +[-1]})
 			pub.sendMessage('set_index_path', data={'index_path': pyData['index_path'] + [-1]})
 
 	def onItemRightClick(self, event):
@@ -65,6 +63,7 @@ class TreeView2(wx.TreeCtrl, Hotkey):
 		if keycode == Hotkey.WXK_ENTER:
 			item = self.GetFocusedItem()
 			self.active_item(event, item)
+		print('YA')
 		super().onKeyDown(event)
 
 	def GetItemByIndexPath(self, index_path, root):

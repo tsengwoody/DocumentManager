@@ -15,56 +15,33 @@ class fileMenuView2(wx.Menu):
 		self.Bind(wx.EVT_MENU, self.onUpdate, self.menu_update)
 
 		self.menu_delete = self.Append(wx.ID_ANY, "Delete")
-		self.Bind(wx.EVT_MENU, self.OnDelete, self.menu_delete)
+		self.Bind(wx.EVT_MENU, self.onRemove, self.menu_delete)
 
-		self.menu_import = self.Append(wx.ID_ANY, "Import")
-		self.Enable(self.menu_import.GetId(), False)
+		self.index_path = None
+		self.data = None
 
-		self.menu_export = self.Append(wx.ID_ANY, "Export")
-		self.Bind(wx.EVT_MENU, self.OnExport, self.menu_export)
+		pub.subscribe(self.setData, 'pointer_raw_data')
+		pub.subscribe(self.setCurrentSection, 'current_section')
+
+	def setData(self, data):
+		self.data = data['data'] if data else None
+		if self.data:
+			self.InitOverItemMenu()
+		else:
+			self.InitNoneOverItemMenu()
+
+	def setCurrentSection(self, data):
+		self.index_path = data['index_path']
 
 	def InitOverItemMenu(self):
-		self.Enable(self.menu_add.GetId(), False)
+		self.Enable(self.menu_add.GetId(), True)
 		self.Enable(self.menu_update.GetId(), True)
 		self.Enable(self.menu_delete.GetId(), True)
-		self.Enable(self.menu_export.GetId(), False)
-		self.Enable(self.menu_import.GetId(), True)
 
 	def InitNoneOverItemMenu(self):
 		self.Enable(self.menu_add.GetId(), True)
 		self.Enable(self.menu_update.GetId(), False)
 		self.Enable(self.menu_delete.GetId(), False)
-		self.Enable(self.menu_export.GetId(), False)
-		self.Enable(self.menu_import.GetId(), True)
-
-	def RemoveAll(self):
-		return True
-
-	def OnDelete(self, event):
-		parent = self.parent
-		caption = "即將刪除"
-		message = "確認是否刪除?"
-		dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.CANCEL | wx.ICON_QUESTION)
-		if dlg.ShowModal() == wx.ID_OK:
-			lst = None
-			if hasattr(parent, 'panelItem') and isinstance(parent.panelItem, wx.Panel):
-				lst = parent.panelItem.getList()
-			item = -1
-			if lst is not None:
-				if hasattr(lst, "GetFocusedItem"):
-					item = lst.GetFocusedItem()
-				if item != -1:
-					pub.sendMessage("data_changing", data={'action': ActionType.DEL.value})
-					lst.DeleteItem(item)
-					lst.Select(0)
-					return True
-			elif isinstance(parent, wx.TreeCtrl):
-				item = parent.GetFocusedItem()
-				pyData = parent.GetItemData(item)
-				if item != -1 and pyData is not None:
-					pub.sendMessage("data_changing", data={'action': ActionType.DEL.value, 'layer': pyData[1], 'index': pyData[2][pyData[1]], 'items':[]})
-					return True
-			return False
 
 	def OnExport(self, event):
 		parent = self.parent
@@ -82,31 +59,63 @@ class fileMenuView2(wx.Menu):
 			except IOError:
 				wx.LogError("Cannot save current data in file '%s'." % pathname)
 
-	# FolderPanel
-	# FolderPanel Update 按鈕觸發事件
-	def onUpdate(self, event):
+	'''@property
+	def data(self):
 		if hasattr(self.parent, 'getList'):
 			lst = self.parent.getList()
 			item = lst.GetFocusedItem()
 			if item < 0:
-				event.Skip()
-				return
+				data = None
 			else:
 				data = lst.GetPyData(item)
 		else:
 			lst = self.parent
 			item = lst.GetFocusedItem()
 			if item.ID is None:
-				event.Skip()
-				return
+				data = None
 			else:
 				data = lst.GetItemData(item)
 
-		dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=data['label'], style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
+		return data'''
 
+
+	def onAdd(self, event):
+		if not self.data:
+			index_path = self.index_path + [-1]
+		else:
+			index_path = self.data['index_path']
+
+		dlg = NewItemDialog(self.parent)
+		if dlg.ShowModal() == wx.ID_OK:
+			data = {
+				'label' :dlg.newItemName,
+				'type' :dlg.newItemType,
+			}
+			if dlg.newItemType == 'section':
+				data.update({'items': []})
+			else:
+				data.update({'content': ''})
+
+			pub.sendMessage("add", data={
+				'index_path': index_path,
+				'data': data,
+			})
+
+		dlg.Destroy()
+
+	def onUpdate(self, event):
+		data = self.data
+		if not data:
+			parent = self.parent
+			caption = "無法更新"
+			message = "無選定項目，無法進行更新"
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+
+		dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=data['label'], style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
 		if dlg.ShowModal() == wx.ID_OK:
 			data['label'] = dlg.GetValue()
-			lst.SetItemText(item, data['label'])
 			pub.sendMessage("update", data={
 				'index_path': data['index_path'],
 				'data': {'label': data['label']},
@@ -114,42 +123,26 @@ class fileMenuView2(wx.Menu):
 
 		dlg.Destroy()
 
-	# FolderPanel Add 按鈕觸發事件
-	def onAdd(self, event):
-		index_path = []
-		# 點在又上時
-		if hasattr(self.parent, 'panelItem'):
-			lst = self.parent.panelItem.getList()
-			item = lst.GetFocusedItem()
-			if item < 0:
-				index_path = [-1]
-			else:
-				index_path = lst.GetItemData(item)['index_path']
-				index_path = index_path[:-1] + [index_path[-1] + 1]
-		# 點在左側時
-		else:
-			lst = self.parent
-			item = lst.GetFocusedItem()
-			if item.ID is None:
-				index_path = [-1]
-			else:
-				index_path = lst.GetItemData(item)['index_path']
-				index_path = index_path[:-1] + [index_path[-1] + 1]
+	def onRemove(self, event):
+		data = self.data
+		if not data:
+			parent = self.parent
+			caption = "無法刪除"
+			message = "無選定項目，無法進行刪除"
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
 
-		dlg = NewItemDialog(self.parent)
-		ret = dlg.ShowModal()
-
-		if ret == wx.ID_OK:
-			label = dlg.newItemName
-			_type = dlg.newItemType
-
-			pub.sendMessage("add", data={
-				'index_path': index_path,
-				'data': {'label': label},
+		parent = self.parent
+		caption = "即將刪除"
+		message = "確認是否刪除?"
+		dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+		if dlg.ShowModal() == wx.ID_OK:
+			pub.sendMessage("remove", data={
+				'index_path': data['index_path'],
 			})
 
 		dlg.Destroy()
-
 
 class ToolBarView2(wx.Panel):
 	def __init__(self, parent, data):
@@ -184,7 +177,6 @@ class ToolBarView2(wx.Panel):
 
 	def setPath(self, data):
 		self.path = data
-		print('data:', data)
 		self.pathText.SetLabel(data)
 
 	def setData(self, data):

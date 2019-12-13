@@ -373,6 +373,8 @@ class CurrentSectionPanel(wx.Panel, Hotkey):
 		self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
 		self.lst.Bind(wx.EVT_TEXT_ENTER,self.onDBClickItem)	
 		self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
+		self.lst.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onDeselectedItem)
+
 		Hotkey.__init__(self, self.lst)
 
 	def setData(self, data):
@@ -402,7 +404,11 @@ class CurrentSectionPanel(wx.Panel, Hotkey):
 		item = event.GetItem()
 		index = item.GetId()
 		data = {'index_path': self.current_section['index_path'] + [index]}
-		pub.sendMessage('set_index_path', data={'index_path': self.current_section['index_path'] + [index]})
+		pub.sendMessage('set_index_path', data=data)
+
+	def onDeselectedItem(self, event):
+		data = {'index_path': self.current_section['index_path'] + [-1]}
+		pub.sendMessage('set_index_path', data=data)
 
 	def buttonData(self):
 		return (

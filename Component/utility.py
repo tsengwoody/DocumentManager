@@ -12,12 +12,12 @@ class Hotkey(object):
 		self.lst.Bind(wx.EVT_RIGHT_DOWN, self.onRightClick)
 
 	def onRightClick(self, event):
-		self.fileMenu.RemoveAll()
 		index, flags = self.lst.HitTest(event.GetPosition())
 		if index == wx.NOT_FOUND:
 			index = self.lst.GetFirstSelected()
+
 		if index != wx.NOT_FOUND:
-			self.fileMenu.InitOverItemMenu()
+			#self.fileMenu.InitOverItemMenu()
 			pos = event.GetPosition()
 			if hasattr(self.lst, 'Select'):
 				self.lst.Select(index)
@@ -26,14 +26,14 @@ class Hotkey(object):
 			if self.fileMenu.Window is None:
 				self.PopupMenu(self.fileMenu, pos)
 		else:
-			self.fileMenu.InitNoneOverItemMenu()
+			#self.fileMenu.InitNoneOverItemMenu()
 			if self.fileMenu.Window is None:
 				self.PopupMenu(self.fileMenu, event.GetPosition())
 
 	def onKeyDown(self, event):
 		keycode = event.GetKeyCode()
 		if keycode == wx.WXK_DELETE:   
-			self.fileMenu.OnDelete(event)
+			self.fileMenu.onRemove(event)
 		if keycode == wx.WXK_F2:
 			self.fileMenu.onUpdate(event)
 		if keycode == wx.WXK_F3:
