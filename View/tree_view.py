@@ -1,93 +1,105 @@
-﻿import wx
-from View.toolbar_view import fileMenuView
+import wx
 from pubsub import pub
-from enums import InputType
+from Component.utility import Hotkey
 
-class TreeView(wx.TreeCtrl):
-	id = 1
+class TreeView2(wx.TreeCtrl, Hotkey):
 	def __init__(self, parent, data):
-		self.panel = wx.Panel(parent, wx.ID_ANY, (0, 0), size=(parent.Size.width/4, parent.Size.height), style = wx.BORDER_THEME | wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND)
-		wx.TreeCtrl.__init__(self, self.panel, self.id, wx.DefaultPosition, (parent.Size.width/4, parent.Size.height), wx.TR_HIDE_ROOT|wx.TR_DEFAULT_STYLE)
+		self.panel = wx.Panel(
+			parent, pos=(0, 0),
+			size=(parent.Size.width / 4, parent.Size.height),
+			style=wx.BORDER_THEME | wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND,
+		)
+		wx.TreeCtrl.__init__(
+			self, self.panel,
+			size=(parent.Size.width / 4, parent.Size.height),
+			style=wx.TR_HIDE_ROOT | wx.TR_DEFAULT_STYLE,
+		)
 
 		# image array
 		il = wx.ImageList(36, 36, True)
 		docBitmap = wx.Bitmap("./icons/documents.png", wx.BITMAP_TYPE_PNG)
 		il.Add(docBitmap)
 		self.AssignImageList(il)
-		self.fileMenu = fileMenuView(self)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
-		self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
-		self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown, self)
-		#self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
+		#self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
+		Hotkey.__init__(self, self)
+		# self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
+		# self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 
-		self.root = self.AddRoot("root") 
-		pub.subscribe(self.setData, "data_changedTree")
+		self.root = self.AddRoot("root")
 		self.setData(data)
 
-	def onKeyDown(self, event):
-		keycode = event.GetKeyCode()
-		WXK_ENTER = 13
-		if keycode == WXK_ENTER:
-			item = self.GetFocusedItem()
-			self.active_item(event, item)
-		if keycode == wx.WXK_F2:
-			self.fileMenu.onUpdate(event)
-		event.Skip()
+		pub.subscribe(self.setData, 'sections')
+		pub.subscribe(self.setSelection, 'current_section')
 
 	def onLeftMouseDown(self, event):
 		item, flags = self.HitTest(event.GetPosition())
 		self.active_item(event, item)
 
-	def onSelChanged(self, event):
-		item = event.GetItem()
-		self.active_item(event, item)
-	
 	def active_item(self, event, item):
-		self.fileMenu.RemoveAll()
 		if item.ID is not None:
-			self.fileMenu.InitOverItemMenu()
 			pyData = self.GetItemData(item)
-			level = pyData[1]
-			index_array = pyData[2]
-			if index_array is not None and index_array[0] != wx.NOT_FOUND: 
-				self.SelectItem(item)	   
-				label = self.GetItemText(item)
-				pub.sendMessage("data_changing", data={'type': InputType.PANEL.value, 'index': index_array, 'label': label, 'layer': level})
+			self.SelectItem(item)
+			pub.sendMessage('set_index_path', data={'index_path': pyData['index_path'] + [-1]})
 
 	def onItemRightClick(self, event):
 		item, flags = self.HitTest(event.GetPosition())
-		self.fileMenu.RemoveAll()
+		if item.ID is None:
+			item = self.GetSelection()
 		if item.ID is not None:
-			self.fileMenu.InitOverItemMenu()
-			pyData = self.GetItemData(item)
-			index = pyData[1]
-			if index != wx.NOT_FOUND: 
-				self.SelectItem(item)
-				self.active_item(event, item)
-				if self.fileMenu.Window is None:
-					self.PopupMenu(self.fileMenu, event.GetPosition())
-		else:
-			self.fileMenu.InitNoneOverItemMenu()
-			if self.fileMenu.Window is None:
-				self.PopupMenu(self.fileMenu, event.GetPosition())			
+			self.SelectItem(item)
+		self.fileMenu.setMenuItem()
+		if self.fileMenu.Window is None:
+			self.PopupMenu(self.fileMenu, event.GetPosition())
 		event.Skip()
 
-	def setData(self, data):
-		items = data['items']
-		self.DeleteAllItems()
-		self.expandChild(self.root, 0, [], items)
-		self.ExpandAll()
+	def onKeyDown(self, event):
+		keycode = event.GetKeyCode()
+		if keycode == Hotkey.WXK_ENTER:
+			item = self.GetFocusedItem()
+			self.active_item(event, item)
+		super().onKeyDown(event)
 
-	def expandChild(self, parent, level, index_array, data=[]):
+	def GetItemByIndexPath(self, index_path, root):
+		if self.GetItemData(root)['index_path'] == index_path:
+			return root
+
+		item, cookie = self.GetFirstChild(root)
+		while item.IsOk():
+			temp = self.GetItemByIndexPath(index_path, item)
+			if temp:
+				return temp
+			item, cookie = self.GetNextChild(root, cookie)
+		return None
+
+	def setSelection(self, data):
+		item = self.GetRootItem()
+		while item.IsOk():
+			selection = self.GetItemByIndexPath(data['index_path'], item)
+			if selection:
+				self.SelectItem(selection)
+				self.EnsureVisible(selection)
+				print(self.GetItemData(selection)['label'])
+				break
+			item = self.GetNextSibling(item)
+
+	def setData(self, data):
+		self.DeleteAllItems()
+		self.expandChild(self.root, data)
+		# self.ExpandAll()
+
+	def expandChild(self, parent, data):
 		if data is None or len(data) == 0:
 			return False
 		else:
 			for index, item in enumerate(data):
 				if 'items' in item:
-					_index_array = index_array.copy()
-					label = item['label']
-					childID = self.AppendItem(parent, label, 0)
-					_index_array.insert(level, index)
-					self.SetPyData(childID, (label, level, _index_array))
-					self.expandChild(childID, level+1, _index_array.copy(), item['items'])
-					self.Expand(childID)
+					childID = self.AppendItem(parent, item['label'], 0)
+					self.SetItemData(childID, {
+						'label': item['label'],
+						'type': 'section',
+						'index_path': item['index_path'],
+						'items': item['items'],
+					})
+					self.expandChild(childID, item['items'])
+					# self.Expand(childID)

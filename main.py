@@ -1,11 +1,5 @@
-"""
-Adapted from wxPython website at http://wiki.wxpython.org/ModelViewController/.
-"""
-
-import wx
+﻿import wx
 from pubsub import pub
-
-print('pubsub API version', pub.VERSION_API)
 
 # notification
 from pubsub.utils.notification import useNotifyByWriteFile
@@ -13,48 +7,58 @@ import sys
 
 useNotifyByWriteFile(sys.stdout)
 
-# the following modules don't know about each other yet will
-# exchange data via pubsub:
-from View.frame_view import FrameView
-from View.panels_view import PanelView
-from View.toolbar_view import ToolBarView
-from View.tree_view import TreeView
 from Model.model import Model
-from enums import InputType, PanelType, ActionType
+from View.view import View
 
-class Controller:
-    def __init__(self):
-        self.size = wx.Size(1000, 400)
-        self.model = Model(self)
-        self.frame = FrameView(None, title = 'math content manager', size=self.size)
-        self.panel = wx.Panel(self.frame, size=self.size)
+# 測試是否不同事件會對應不同 method 所用
+def decorate_event(event):
+	def outer_d_f(f):
+		def d_f(data, *args, **kargs):
+			print("%s before call" % (event))
+			result = f(data, *args, **kargs)
+			print("%s after call" % (event))
+			return result
+		return d_f
+	return outer_d_f
 
-        pub.subscribe(self.changeData, 'data_changing')
-        
-        self.tree = TreeView(self.panel, self.model.ori_data)
-        self.toolbarPanel = ToolBarView(self.panel, self.model.data)
+def show(data):
+	pass
+	#print(data)
 
-        ori_data = self.model.data.copy()
-        counting_data = self.model.data.copy()
-        counting_data['items'] = []
-        counting_data['clickable'] = False
 
-        self.rightTopPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, 70), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/3), data=self.model.data, event_name=self.model.event_name[0])
-        
-        self.rightBottomPanel = PanelView(self.panel, title=self.model.data['label'], pos=(self.frame.Size.width/4, self.frame.Size.height/2), size=(self.frame.Size.width*3/4-15, self.frame.Size.height/2-40), data=counting_data, event_name=self.model.event_name[1])
-        self.frame.show(True)
+class DocumentManagerApp:
+	def __init__(self):
+		self.model = Model()
+		self.view = View(self.model)
+		self.model.set_index_path({'index_path': [0, -1]})
 
-        self.rightTopPanel.setData(ori_data)
+		# subscribe for model
+		model_function = {
+			'set_index_path': self.model.set_index_path,
+			'add': self.model.add,
+			'update': self.model.update,
+			'remove': self.model.remove,
+		}
 
-    def changeData(self, data):
-        self.model.updateItem(data)
-    
-    def sendMessage(self, event, data):
-        pub.sendMessage(event, data=data)
+		for event, func in model_function.items():
+			pub.subscribe(func, event)
 
+		# subscribe for view
+		view_function = {
+			'current_section': decorate_event('current_section')(show),
+			'sections': decorate_event('sections')(show),
+			'path': decorate_event('path')(show),
+			'pointer_raw_data': decorate_event('pointer_raw_data')(show),
+			'pointer_html_data': decorate_event('pointer_html_data')(show),
+		}
+
+		for event, func in view_function.items():
+			pub.subscribe(func, event)
+
+		pub.sendMessage('set_index_path', data={'index_path': [0, -1]})
 
 if __name__ == "__main__":
-    app = wx.App()
-    c = Controller()
-    sys.stdout = sys.__stdout__
-    app.MainLoop()
+	app = wx.App()
+	#實例一定要assign到一個變數，不然會被自動回收
+	d = DocumentManagerApp()
+	app.MainLoop()

@@ -1,10 +1,9 @@
 import wx
 
 from View.frame_view import FrameView
-from View.toolbar_view2 import ToolBarView2 as ToolBarView
-from View.tree_view2 import TreeView2 as TreeView
-from View.component_view2 import RightTopPanel, RightBottomPanel
-from Model.model import Model2 as Model
+from View.toolbar_view import ToolBarView2 as ToolBarView
+from View.tree_view import TreeView2 as TreeView
+from View.component_view import RightTopPanel, RightBottomPanel
 
 
 class View:

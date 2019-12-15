@@ -1,5 +1,5 @@
 import wx
-from View.toolbar_view2 import fileMenuView2 as fileMenuView
+from View.toolbar_view import fileMenuView2 as fileMenuView
 
 class Hotkey(object):
 	WXK_N = 78
@@ -17,16 +17,16 @@ class Hotkey(object):
 			index = self.lst.GetFirstSelected()
 
 		if index != wx.NOT_FOUND:
-			#self.fileMenu.InitOverItemMenu()
 			pos = event.GetPosition()
 			if hasattr(self.lst, 'Select'):
 				self.lst.Select(index)
 				rect = self.lst.GetItemRect(index)
 				pos = wx.Point(rect.Left+rect.Width/2, rect.Top+rect.Height/2)
+			self.fileMenu.setMenuItem()
 			if self.fileMenu.Window is None:
 				self.PopupMenu(self.fileMenu, pos)
 		else:
-			#self.fileMenu.InitNoneOverItemMenu()
+			self.fileMenu.setMenuItem()
 			if self.fileMenu.Window is None:
 				self.PopupMenu(self.fileMenu, event.GetPosition())
 
