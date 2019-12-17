@@ -3,7 +3,7 @@ from pubsub import pub
 from Component.utility import Hotkey
 
 
-class TreeView2(wx.TreeCtrl, Hotkey):
+class TreeView(wx.TreeCtrl, Hotkey):
 	def __init__(self, parent, data):
 		self.panel = wx.Panel(
 			parent, pos=(0, 0),

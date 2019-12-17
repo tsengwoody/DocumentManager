@@ -4,7 +4,7 @@ from Component.utility import Hotkey
 from pubsub import pub
 from enums import ImageIdEnum, InputType, PanelType, ActionType
 from module.asciimathml import parse
-from View.toolbar_view import fileMenuView2 as fileMenuView
+from View.toolbar_view import fileMenuView
 
 
 class HtmlPanel(wx.Panel):
@@ -97,8 +97,6 @@ class TextPanel(wx.Panel):
 
 		self.SetSizer(self.bsizer)
 
-		self.modelBindView()
-
 	def onPanelActivated(self):
 		self.Show()
 
@@ -115,7 +113,6 @@ class TextPanel(wx.Panel):
 		if entryDialog.ShowModal() == wx.ID_OK:
 			textValue = entryDialog.GetValue()
 			self.content = textValue
-			self.modelBindView()
 
 	def OnExport(self, event):
 		self.fileMenu.OnExport(event)
@@ -157,7 +154,6 @@ class MathmlPanel(wx.Panel):
 
 		self.button_panel = wx.Panel(self)
 		self.createButtonBar(self.button_panel, xPos=0)
-		self.modelBindView()
 
 		self.bsizer_btn = wx.BoxSizer(wx.VERTICAL)
 		for btn in self.buttons:
@@ -208,7 +204,6 @@ class MathmlPanel(wx.Panel):
 			asciimath = entryDialog.GetValue()
 			mathMl = tostring(asciimathml.parse(asciimath))
 			self.content = mathMl
-			self.modelBindView()
 
 	def OnInteraction(self, evt):
 		pass

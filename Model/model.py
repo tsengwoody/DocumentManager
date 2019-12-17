@@ -2,6 +2,7 @@
 from enums import PanelType, ActionType
 from pubsub import pub
 
+
 class Model:
 	"""
 		每次更新皆需發送以下資料給 UI 顯示，需額外加 index_path 資訊，以便 UI 操作時傳訊給 model

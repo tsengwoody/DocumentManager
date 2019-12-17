@@ -3,7 +3,7 @@ from pubsub import pub
 from Component.dialog import NewItemDialog
 
 
-class fileMenuView2(wx.Menu):
+class fileMenuView(wx.Menu):
 	def __init__(self, parent):
 		wx.Menu.__init__(self)
 		self.parent = parent
@@ -218,7 +218,7 @@ class fileMenuView2(wx.Menu):
 		dlg.Destroy()
 
 
-class ToolBarView2(wx.Panel):
+class ToolBarView(wx.Panel):
 	def __init__(self, parent, data):
 		wx.Panel.__init__(
 			self, parent, wx.ID_ANY,

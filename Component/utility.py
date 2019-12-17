@@ -1,5 +1,6 @@
 import wx
-from View.toolbar_view import fileMenuView2 as fileMenuView
+from View.toolbar_view import fileMenuView
+
 
 class Hotkey(object):
 	WXK_N = 78
