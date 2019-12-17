@@ -3,7 +3,7 @@ import wx.html2
 from Component.utility import Hotkey
 from pubsub import pub
 from enums import ImageIdEnum, InputType, PanelType, ActionType
-from asciimathml import parse
+from module.asciimathml import parse
 from View.toolbar_view import fileMenuView2 as fileMenuView
 
 
