@@ -1,14 +1,12 @@
 import wx
-from wx.lib import scrolledpanel
-from pubsub import pub
+
 
 class FrameView(wx.Frame):
 	def __init__(self, parent, title, size=wx.Size(800, 400)):
-		wx.Frame.__init__(self, None, title = title)
+		wx.Frame.__init__(self, None, title=title)
 		self.Centre()
 		self.SetMinSize(size)
-		self.SetSize(size) 
-
+		self.SetSize(size)
 		self.SetMenuBar(self.createMenuBar())
 
 	def show(self, isShow=True):
@@ -26,14 +24,14 @@ class FrameView(wx.Frame):
 						'label': _('&Open'),
 						'type': 'menuitem',
 						'action': 'onNoAction',
-						'show': ['section',],
+						'show': ['section'],
 					},
 					{
 						'id': 'close',
 						'label': _('&Close'),
 						'type': 'menuitem',
 						'action': 'onNoAction',
-						'show': ['section',],
+						'show': ['section'],
 					},
 				],
 			},

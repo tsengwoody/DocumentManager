@@ -26,67 +26,67 @@ class fileMenuView2(wx.Menu):
 				'id': 'enter',
 				'label': _('Enter'),
 				'action': 'onNoAction',
-				'show': ['section',],
+				'show': ['section', ],
 			},
 			{
 				'id': 'edittext',
 				'label': _('Edit Text'),
 				'action': 'onNoAction',
-				'show': ['text',],
+				'show': ['text', ],
 			},
 			{
 				'id': 'editmathml',
 				'label': _('Edit MathML'),
 				'action': 'onNoAction',
-				'show': ['mathml',],
+				'show': ['mathml', ],
 			},
 			{
 				'id': 'add',
 				'label': _('Add'),
 				'action': 'onAdd',
-				'show': ['unselected',],
+				'show': ['unselected', ],
 			},
 			{
 				'id': 'update',
 				'label': _('Update'),
 				'action': 'onUpdate',
-				'show': ['text', 'section', 'mathml',],
+				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'remove',
 				'label': _('Delete'),
 				'action': 'onRemove',
-				'show': ['text', 'section', 'mathml',],
+				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'cut',
 				'label': _('Cut'),
 				'action': 'onNoAction',
-				'show': ['text', 'section', 'mathml',],
+				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'copy',
 				'label': _('Copy'),
 				'action': 'onNoAction',
-				'show': ['text', 'section', 'mathml',],
+				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'paste',
 				'label': _('Paste'),
 				'action': 'onNoAction',
-				'show': ['unselected',],
+				'show': ['unselected', ],
 			},
 			{
 				'id': 'moveup',
 				'label': _('Move Up'),
 				'action': 'onNoAction',
-				'show': ['text', 'section', 'mathml',],
+				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'movedown',
 				'label': _('Move Down'),
 				'action': 'onNoAction',
-				'show': ['text', 'section', 'mathml',],
+				'show': ['text', 'section', 'mathml', ],
 			},
 		]
 
@@ -110,11 +110,11 @@ class fileMenuView2(wx.Menu):
 		# 根據指向的物件決定顯示項目
 		for item in self.menuData:
 			if not self.data and 'unselected' in item['show']:
-				self.Insert(self.GetMenuItemCount() ,self.menus[item['id']])
+				self.Insert(self.GetMenuItemCount(), self.menus[item['id']])
 			elif self.data and self.data['type'] in item['show']:
-				self.Insert(self.GetMenuItemCount() ,self.menus[item['id']])
+				self.Insert(self.GetMenuItemCount(), self.menus[item['id']])
 
-	def OnExport(self, event):
+	'''def onExport(self, event):
 		parent = self.parent
 		with wx.FileDialog(parent, "Save export file", wildcard="export files (*.json)|*.json",
 					   style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
@@ -128,7 +128,7 @@ class fileMenuView2(wx.Menu):
 				with open(pathname, 'w', encoding="utf-8") as file:
 					file.write(parent.content)
 			except IOError:
-				wx.LogError("Cannot save current data in file '%s'." % pathname)
+				wx.LogError("Cannot save current data in file '%s'." % pathname)'''
 
 	@property
 	def data(self):
@@ -158,8 +158,8 @@ class fileMenuView2(wx.Menu):
 		dlg = NewItemDialog(self.parent)
 		if dlg.ShowModal() == wx.ID_OK:
 			data = {
-				'label' :dlg.newItemName,
-				'type' :dlg.newItemType,
+				'label': dlg.newItemName,
+				'type': dlg.newItemType,
 			}
 			if dlg.newItemType == 'section':
 				data.update({'items': []})
@@ -183,7 +183,10 @@ class fileMenuView2(wx.Menu):
 			dlg.ShowModal()
 			return False
 
-		dlg = wx.TextEntryDialog(self.parent, 'Enter your update folder', value=data['label'], style=wx.TE_MULTILINE|wx.OK|wx.CANCEL)
+		dlg = wx.TextEntryDialog(
+			self.parent, 'Enter your update folder',
+			value=data['label'], style=wx.TE_MULTILINE | wx.OK | wx.CANCEL,
+		)
 		if dlg.ShowModal() == wx.ID_OK:
 			data['label'] = dlg.GetValue()
 			pub.sendMessage("update", data={
@@ -214,6 +217,7 @@ class fileMenuView2(wx.Menu):
 
 		dlg.Destroy()
 
+
 class ToolBarView2(wx.Panel):
 	def __init__(self, parent, data):
 		wx.Panel.__init__(
@@ -229,9 +233,12 @@ class ToolBarView2(wx.Panel):
 		self.backPathbtn.SetLabel("上一層")
 
 		self.toolbar = wx.BoxSizer(wx.VERTICAL)
-		self.toolbar.Add(self.backPathbtn, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, border=5)
+		self.toolbar.Add(self.backPathbtn, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=5)
 
-		self.pathText = wx.StaticText(self, -1, data['path'], size=(-1, -1), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.BU_NOTEXT)
+		self.pathText = wx.StaticText(
+			self, -1, data['path'],
+			size=(-1, -1), style=wx.ALIGN_CENTRE_HORIZONTAL | wx.BU_NOTEXT,
+		)
 		self.toolbar.Add(self.pathText, 1, wx.ALIGN_CENTER_VERTICAL | wx.ALL)
 
 		self.SetSizer(self.toolbar)

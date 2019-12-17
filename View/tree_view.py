@@ -2,6 +2,7 @@ import wx
 from pubsub import pub
 from Component.utility import Hotkey
 
+
 class TreeView2(wx.TreeCtrl, Hotkey):
 	def __init__(self, parent, data):
 		self.panel = wx.Panel(
@@ -21,7 +22,7 @@ class TreeView2(wx.TreeCtrl, Hotkey):
 		il.Add(docBitmap)
 		self.AssignImageList(il)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
-		#self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
+		# self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
 		Hotkey.__init__(self, self)
 		# self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
 		# self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
