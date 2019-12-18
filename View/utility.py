@@ -11,6 +11,8 @@ class Hotkey(object):
 		self.lst.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
 		self.lst.Bind(wx.EVT_KEY_UP, self.onKeyUp)			
 		self.lst.Bind(wx.EVT_RIGHT_DOWN, self.onRightClick)
+		self.shift_down = False
+		self.ctrl_down = False
 
 	def onRightClick(self, event):
 		index, flags = self.lst.HitTest(event.GetPosition())
@@ -51,6 +53,6 @@ class Hotkey(object):
 			self.shift_down = False
 		if keycode == wx.WXK_CONTROL:
 			self.ctrl_down = False
-		if self.shift_down and self.ctrl_down and keycode == WXK_N:
-			self.fileMenu.OnAdd(event)
+		if self.shift_down and self.ctrl_down and keycode == self.WXK_N:
+			self.fileMenu.onAdd(event)
 		event.Skip()

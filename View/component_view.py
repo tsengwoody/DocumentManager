@@ -1,10 +1,9 @@
 ﻿import wx
 import wx.html2
-from Component.utility import Hotkey
 from pubsub import pub
 from enums import ImageIdEnum, InputType, PanelType, ActionType
 from module.asciimathml import parse
-from View.toolbar_view import fileMenuView
+from View.utility import Hotkey
 
 
 class HtmlPanel(wx.Panel):
@@ -18,10 +17,6 @@ class HtmlPanel(wx.Panel):
 
 
 class SectionPanel(wx.Panel):
-
-	def __repr__(self):
-		return f"<SectionPanel Name: {self.name}  Type: {self.type}>"
-
 	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.content = content
@@ -72,9 +67,6 @@ class SectionPanel(wx.Panel):
 
 
 class TextPanel(wx.Panel):
-	def __repr__(self):
-		return f"<TextPanel Name: {self.name}  Type: {self.type}>"
-
 	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.content = content
@@ -115,7 +107,7 @@ class TextPanel(wx.Panel):
 			self.content = textValue
 
 	def OnExport(self, event):
-		self.fileMenu.OnExport(event)
+		pass
 
 	def buttonData(self):
 		return (
@@ -138,10 +130,6 @@ class TextPanel(wx.Panel):
 
 
 class MathmlPanel(wx.Panel):
-
-	def __repr__(self):
-		return f"<MathmlPanel Name: {self.name}  Type: {self.type}>"
-
 	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.html_panel = HtmlPanel(parent=self, content=content['data'])
@@ -438,7 +426,6 @@ class RightTopPanel(wx.Panel):
 
 class RightBottomPanel(wx.Panel):
 	def __init__(self, parent, data, pos=(200, 000), size=wx.Size(600, 200)):
-		self.fileMenu = fileMenuView(self)
 		wx.Panel.__init__(
 			self, parent, wx.ID_ANY, pos, size, style=wx.BORDER_THEME | wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND
 		)

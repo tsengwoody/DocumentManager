@@ -1,6 +1,6 @@
 ﻿import wx
 from pubsub import pub
-from Component.dialog import NewItemDialog
+from View.dialog import NewItemDialog
 
 
 class fileMenuView(wx.Menu):
@@ -134,14 +134,16 @@ class fileMenuView(wx.Menu):
 	def data(self):
 		if hasattr(self.parent, 'getList'):
 			lst = self.parent.getList()
-			item = lst.GetFocusedItem()
+			# item = lst.GetFocusedItem()
+			item = lst.GetFirstSelected()
 			if item < 0:
 				data = None
 			else:
 				data = lst.GetPyData(item)
 		else:
 			lst = self.parent
-			item = lst.GetFocusedItem()
+			# item = lst.GetFocusedItem()
+			item = lst.GetSelection()
 			if item.ID is None:
 				data = None
 			else:
@@ -184,8 +186,8 @@ class fileMenuView(wx.Menu):
 			return False
 
 		dlg = wx.TextEntryDialog(
-			self.parent, 'Enter your update folder',
-			value=data['label'], style=wx.TE_MULTILINE | wx.OK | wx.CANCEL,
+			self.parent, _('Enter update label'),
+			value=data['label'], style=wx.OK | wx.CANCEL,
 		)
 		if dlg.ShowModal() == wx.ID_OK:
 			data['label'] = dlg.GetValue()

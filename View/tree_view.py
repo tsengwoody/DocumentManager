@@ -1,6 +1,6 @@
 import wx
 from pubsub import pub
-from Component.utility import Hotkey
+from View.utility import Hotkey
 
 
 class TreeView(wx.TreeCtrl, Hotkey):
