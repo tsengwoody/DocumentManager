@@ -11,8 +11,26 @@ class Hotkey(object):
 		self.lst.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
 		self.lst.Bind(wx.EVT_KEY_UP, self.onKeyUp)			
 		self.lst.Bind(wx.EVT_RIGHT_DOWN, self.onRightClick)
-		self.shift_down = False
-		self.ctrl_down = False
+
+		self.key_down = set([])
+		self.key_map_action = [
+			{
+				'key': [wx.WXK_F2],
+				'action': self.fileMenu.onUpdate,
+			},
+			{
+				'key': [wx.WXK_SHIFT, wx.WXK_CONTROL, self.WXK_N],
+				'action': self.fileMenu.onAdd,
+			},
+			{
+				'key': [wx.WXK_F2],
+				'action': self.fileMenu.onUpdate,
+			},
+			{
+				'key': [wx.WXK_DELETE],
+				'action': self.fileMenu.onRemove,
+			},
+		]
 
 	def onRightClick(self, event):
 		index, flags = self.lst.HitTest(event.GetPosition())
@@ -25,34 +43,25 @@ class Hotkey(object):
 				self.lst.Select(index)
 				rect = self.lst.GetItemRect(index)
 				pos = wx.Point(rect.Left+rect.Width/2, rect.Top+rect.Height/2)
-			self.fileMenu.setMenuItem()
-			if self.fileMenu.Window is None:
-				self.PopupMenu(self.fileMenu, pos)
-		else:
-			self.fileMenu.setMenuItem()
-			if self.fileMenu.Window is None:
-				self.PopupMenu(self.fileMenu, event.GetPosition())
+
+		self.fileMenu.setMenuItem()
+		if self.fileMenu.Window is None:
+			self.PopupMenu(self.fileMenu, pos)
 
 	def onKeyDown(self, event):
 		keycode = event.GetKeyCode()
-		if keycode == wx.WXK_DELETE:   
-			self.fileMenu.onRemove(event)
-		if keycode == wx.WXK_F2:
-			self.fileMenu.onUpdate(event)
-		if keycode == wx.WXK_F3:
-			self.fileMenu.onAdd(event)			
-		if keycode == wx.WXK_SHIFT:
-			self.shift_down = True
-		if keycode == wx.WXK_CONTROL:
-			self.ctrl_down = True
+		self.key_down.add(keycode)
+		for item in self.key_map_action:
+			if self.key_down == set(item['key']):
+				self.key_down.clear()
+				item['action'](event)
+				break
 		event.Skip()
 
 	def onKeyUp(self, event):
 		keycode = event.GetKeyCode()	
-		if keycode == wx.WXK_SHIFT:
-			self.shift_down = False
-		if keycode == wx.WXK_CONTROL:
-			self.ctrl_down = False
-		if self.shift_down and self.ctrl_down and keycode == self.WXK_N:
-			self.fileMenu.onAdd(event)
+		try:
+			self.key_down.remove(keycode)
+		except KeyError:
+			pass
 		event.Skip()
