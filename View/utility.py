@@ -33,12 +33,12 @@ class Hotkey(object):
 		]
 
 	def onRightClick(self, event):
-		index, flags = self.lst.HitTest(event.GetPosition())
+		pos = event.GetPosition()
+		index, flags = self.lst.HitTest(pos)
 		if index == wx.NOT_FOUND:
 			index = self.lst.GetFirstSelected()
 
 		if index != wx.NOT_FOUND:
-			pos = event.GetPosition()
 			if hasattr(self.lst, 'Select'):
 				self.lst.Select(index)
 				rect = self.lst.GetItemRect(index)
@@ -63,5 +63,6 @@ class Hotkey(object):
 		try:
 			self.key_down.remove(keycode)
 		except KeyError:
-			pass
+			self.key_down.clear()
+		print(self.key_down)
 		event.Skip()
