@@ -3,6 +3,7 @@ import wx.html2
 from pubsub import pub
 from enums import ImageIdEnum, InputType, PanelType, ActionType
 from module.asciimathml import parse
+from View.toolbar_view import fileMenuView
 from View.utility import Hotkey
 
 
@@ -261,13 +262,64 @@ class ListCtrl(wx.ListCtrl):
 		event.Skip()
 
 
-class CurrentSectionPanel(wx.Panel, Hotkey):
+class FolderView(ListCtrl, Hotkey):
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		Hotkey.__init__(self)
+		self.fileMenu = fileMenuView(self)
+		self.key_map_action = [
+			{
+				'key': [wx.WXK_F2],
+				'action': self.fileMenu.onUpdate,
+			},
+			{
+				'key': [wx.WXK_SHIFT, wx.WXK_CONTROL, ord('N')],
+				'action': self.fileMenu.onAdd,
+			},
+			{
+				'key': [wx.WXK_F2],
+				'action': self.fileMenu.onUpdate,
+			},
+			{
+				'key': [wx.WXK_DELETE],
+				'action': self.fileMenu.onRemove,
+			},
+			{
+				'key': [wx.WXK_CONTROL, ord('X')],
+				'action': self.fileMenu.onCut,
+			},
+			{
+				'key': [wx.WXK_CONTROL, ord('C')],
+				'action': self.fileMenu.onCopy,
+			},
+			{
+				'key': [wx.WXK_CONTROL, ord('V')],
+				'action': self.fileMenu.onPaste,
+			},
+			{
+				'key': [wx.WXK_SHIFT, wx.WXK_CONTROL, wx.WXK_LEFT],
+				'action': self.fileMenu.onMoveUp,
+			},
+			{
+				'key': [wx.WXK_SHIFT, wx.WXK_CONTROL, wx.WXK_RIGHT],
+				'action': self.fileMenu.onMoveDown,
+			},
+			{
+				'key': [wx.WXK_BACK],
+				'action': self.fileMenu.onBack,
+			},
+		]
+		self.clipboard = None
+
+	def getList(self):
+		return self
+
+
+class CurrentSectionPanel(wx.Panel):
 	def __init__(self, parent, data):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.current_section = data
 		self.buttons = []
-		self.shift_down = False
-		self.ctrl_down = False
 
 		# ======================================================================
 		# 我的UI創建方法
@@ -286,7 +338,7 @@ class CurrentSectionPanel(wx.Panel, Hotkey):
 		il.Add(textBitmap)
 		il.Add(mathBitmap)
 
-		self.lst = ListCtrl(self, -1, size=(300, 600), style=wx.LC_ICON | wx.LC_AUTOARRANGE)
+		self.lst = FolderView(self, -1, size=(300, 600), style=wx.LC_ICON | wx.LC_AUTOARRANGE)
 		# 將剛剛的圖片陣列放入 左邊的 ListCtrl 中，這樣新增 item 時就可以直接說我要加入第幾種圖片就可以了
 		self.lst.AssignImageList(il, wx.IMAGE_LIST_NORMAL)
 
@@ -298,6 +350,7 @@ class CurrentSectionPanel(wx.Panel, Hotkey):
 				'label': item['label'],
 				'type': item['type'],
 				'content': item['content'] if 'content' in item else '',
+				'items': item['items'] if 'items' in item else [],
 			})
 			# print(self.lst.GetPyData(wxitem))
 
@@ -317,14 +370,12 @@ class CurrentSectionPanel(wx.Panel, Hotkey):
 		self.bsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.bsizer.Add(self.lst, 1, wx.EXPAND | wx.ALL, border=5)
 		self.bsizer.Add(self.button_panel, 0, wx.EXPAND | wx.ALL)
-
 		self.SetSizer(self.bsizer)
+
 		self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
 		self.lst.Bind(wx.EVT_TEXT_ENTER, self.onDBClickItem)
 		self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
 		self.lst.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onDeselectedItem)
-
-		Hotkey.__init__(self, self.lst)
 
 	def setData(self, data):
 		self.lst.DeleteAllItems()
@@ -337,6 +388,7 @@ class CurrentSectionPanel(wx.Panel, Hotkey):
 				'label': item['label'],
 				'type': item['type'],
 				'content': item['content'] if 'content' in item else '',
+				'items': item['items'] if 'items' in item else [],
 			})
 
 	def getList(self):
@@ -377,29 +429,6 @@ class CurrentSectionPanel(wx.Panel, Hotkey):
 		button = wx.Button(parent, -1, label, pos)
 		button.Bind(wx.EVT_BUTTON, handler)
 		return button
-
-	def exportData(self, event):
-		import json
-		print("on Export Data!!")
-
-		with wx.FileDialog(
-			self, "Save export file", wildcard="export files (*.json)|*.json",
-			style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
-		) as fileDialog:
-			if fileDialog.ShowModal() == wx.ID_CANCEL:
-				return	 # the user changed their mind
-
-			# save the current contents in the file
-			pathname = fileDialog.GetPath()
-			try:
-				with open(pathname, 'w', encoding="utf-8") as f:
-					# file.write(self.content)
-					print(self.datas)
-					print(type(self.datas))
-
-					json.dump(self.datas, f, ensure_ascii=False)
-			except IOError:
-				wx.LogError(f"Cannot save current data in file: {pathname}.")
 
 
 class RightTopPanel(wx.Panel):

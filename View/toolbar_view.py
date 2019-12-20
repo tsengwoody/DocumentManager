@@ -1,4 +1,5 @@
-﻿import wx
+﻿from copy import deepcopy
+import wx
 from pubsub import pub
 from View.dialog import NewItemDialog
 
@@ -7,16 +8,15 @@ class fileMenuView(wx.Menu):
 	def __init__(self, parent):
 		wx.Menu.__init__(self)
 		self.parent = parent
+		self.index_path = None
 
 		self.menus = {}
 		for item in self.menuData:
 			self.menus[item['id']] = self.Append(wx.ID_ANY, item['label'])
 			self.Bind(wx.EVT_MENU, getattr(self, item['action']), self.menus[item['id']])
 
-		self.index_path = None
-		# self.data = None
+		self.parent.Bind(wx.EVT_RIGHT_DOWN, self.onRightClick)
 
-		# pub.subscribe(self.setData, 'pointer_raw_data')
 		pub.subscribe(self.setCurrentSection, 'current_section')
 
 	@property
@@ -25,7 +25,7 @@ class fileMenuView(wx.Menu):
 			{
 				'id': 'enter',
 				'label': _('Enter'),
-				'action': 'onNoAction',
+				'action': 'onEnter',
 				'show': ['section', ],
 			},
 			{
@@ -61,41 +61,59 @@ class fileMenuView(wx.Menu):
 			{
 				'id': 'cut',
 				'label': _('Cut'),
-				'action': 'onNoAction',
+				'action': 'onCut',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'copy',
 				'label': _('Copy'),
-				'action': 'onNoAction',
+				'action': 'onCopy',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'paste',
 				'label': _('Paste'),
-				'action': 'onNoAction',
+				'action': 'onPaste',
 				'show': ['unselected', ],
 			},
 			{
 				'id': 'moveup',
 				'label': _('Move Up'),
-				'action': 'onNoAction',
+				'action': 'onMoveUp',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'movedown',
 				'label': _('Move Down'),
-				'action': 'onNoAction',
+				'action': 'onMoveDown',
 				'show': ['text', 'section', 'mathml', ],
+			},
+			{
+				'id': 'export',
+				'label': _('Export'),
+				'action': 'onExport',
+				'show': ['section', ],
 			},
 		]
 
 	def onNoAction(self, event):
 		pass
 
-	def setData(self, data):
-		self.data = data['data'] if data else None
+	def onRightClick(self, event):
+		pos = event.GetPosition()
+		index, flags = self.parent.HitTest(pos)
+		if index == wx.NOT_FOUND:
+			index = self.parent.GetFirstSelected()
+
+		if index != wx.NOT_FOUND:
+			if hasattr(self.parent, 'Select'):
+				self.parent.Select(index)
+				rect = self.parent.GetItemRect(index)
+				pos = wx.Point(rect.Left+rect.Width/2, rect.Top+rect.Height/2)
+
 		self.setMenuItem()
+		if self.Window is None:
+			self.parent.PopupMenu(self, pos)
 
 	def setCurrentSection(self, data):
 		self.index_path = data['index_path']
@@ -113,22 +131,6 @@ class fileMenuView(wx.Menu):
 				self.Insert(self.GetMenuItemCount(), self.menus[item['id']])
 			elif self.data and self.data['type'] in item['show']:
 				self.Insert(self.GetMenuItemCount(), self.menus[item['id']])
-
-	'''def onExport(self, event):
-		parent = self.parent
-		with wx.FileDialog(parent, "Save export file", wildcard="export files (*.json)|*.json",
-					   style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
-
-			if fileDialog.ShowModal() == wx.ID_CANCEL:
-				return	 # the user changed their mind
-
-			# save the current contents in the file
-			pathname = fileDialog.GetPath()
-			try:
-				with open(pathname, 'w', encoding="utf-8") as file:
-					file.write(parent.content)
-			except IOError:
-				wx.LogError("Cannot save current data in file '%s'." % pathname)'''
 
 	@property
 	def data(self):
@@ -150,6 +152,58 @@ class fileMenuView(wx.Menu):
 				data = lst.GetItemData(item)
 
 		return data
+
+	def onEnter(self, event):
+		data = self.data
+		if not data:
+			parent = self.parent
+			caption = _("無法進入")
+			message = _("無選定項目，無法進入")
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+		if not data['type'] == 'section':
+			parent = self.parent
+			caption = _("無法進入")
+			message = _("選定項目非資料夾，無法進入")
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+		print(data['index_path'])
+		pub.sendMessage('set_index_path', data={
+			'index_path': data['index_path'] + [-1],
+		})
+
+	def onBack(self, event):
+		data = self.data
+		if len(data['index_path'][:-1]) <= 1:
+			parent = self.parent
+			caption = _("無法返回")
+			message = _("已在最頂層資料夾，無法返回上一層")
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+		pub.sendMessage('set_index_path', data={
+			'index_path': data['index_path'][:-2] + [-1]
+		})
+
+	def onExport(self, event):
+		from json import dump
+		parent = self.parent
+		with wx.FileDialog(
+			parent, "Save export file", wildcard="export files (*.json)|*.json",
+			style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+		) as fileDialog:
+
+			if fileDialog.ShowModal() == wx.ID_CANCEL:
+				return False #  the user changed their mind
+
+			# save the current contents in the file
+			pathname = fileDialog.GetPath()
+			try:
+				dump(self.data, open(pathname, 'w', encoding="utf-8"))
+			except IOError:
+				wx.LogError("Cannot save current data in file '%s'." % pathname)
 
 	def onAdd(self, event):
 		if not self.data:
@@ -219,6 +273,92 @@ class fileMenuView(wx.Menu):
 
 		dlg.Destroy()
 
+	def onMoveUp(self, event):
+		data = self.data
+		if not data:
+			parent = self.parent
+			caption = "無法移動"
+			message = "無選定項目，無法進行移動"
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+		if data['index_path'][-1] == 0:
+			parent = self.parent
+			caption = "無法移動"
+			message = "選定項目已在最前面，無法進行移動"
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+		old_index_path = data['index_path']
+		new_index_path = data['index_path'][:-1] + [data['index_path'][-1] - 1]
+		pub.sendMessage("move", data={
+			'old_index_path': old_index_path,
+			'new_index_path': new_index_path,
+		})
+
+	def onMoveDown(self, event):
+		data = self.data
+		if not data:
+			parent = self.parent
+			caption = "無法移動"
+			message = "無選定項目，無法進行移動"
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+		old_index_path = data['index_path']
+		new_index_path = data['index_path'][:-1] + [data['index_path'][-1] + 1]
+		pub.sendMessage("move", data={
+			'old_index_path': old_index_path,
+			'new_index_path': new_index_path,
+		})
+
+	def onCut(self, event):
+		data = self.data
+		if not data:
+			parent = self.parent
+			caption = _("無法剪下")
+			message = _("無選定項目，無法進行剪下")
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+
+		self.parent.clipboard = deepcopy(data)
+		pub.sendMessage("remove", data={
+			'index_path': data['index_path'],
+		})
+
+	def onCopy(self, event):
+		data = self.data
+		if not data:
+			parent = self.parent
+			caption = _("無法複製")
+			message = _("無選定項目，無法進行複製")
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+
+		self.parent.clipboard = deepcopy(self.data)
+
+	def onPaste(self, event):
+		data = self.parent.clipboard
+		if not data:
+			parent = self.parent
+			caption = _("無法貼上")
+			message = _("剪貼簿無資料，無法進行貼上")
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+
+		if not self.data:
+			index_path = self.index_path + [-1]
+		else:
+			index_path = self.data['index_path']
+
+		pub.sendMessage("add", data={
+			'index_path': index_path,
+			'data': data,
+		})
+
 
 class ToolBarView(wx.Panel):
 	def __init__(self, parent, data):
@@ -232,7 +372,7 @@ class ToolBarView(wx.Panel):
 		backPathBitmap = wx.Bitmap("./icons/backPath.png", wx.BITMAP_TYPE_PNG)
 		self.backPathbtn = wx.Button(self, -1, style=wx.BU_BOTTOM | wx.BU_NOTEXT)
 		self.backPathbtn.SetBitmap(backPathBitmap, wx.BOTTOM)
-		self.backPathbtn.SetLabel("上一層")
+		self.backPathbtn.SetLabel(_("Back"))
 
 		self.toolbar = wx.BoxSizer(wx.VERTICAL)
 		self.toolbar.Add(self.backPathbtn, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, border=5)

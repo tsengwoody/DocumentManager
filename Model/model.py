@@ -239,3 +239,42 @@ class Model:
         
 		# 將結果發布給訂閱者。
 		self.announcement()
+
+	def move(self, data):
+		"""
+			data: {
+				'old_index_path': [0,1,1], # 要搬移前的位置
+				'new_index_path': [0,1,3], # 要搬移後的位置
+			}
+			判斷：如果 index_path 有不存在的 index 則 raise exception
+		"""
+
+		old_index_path = data['old_index_path'][:-1]
+		old_index = data['old_index_path'][-1]
+		try:
+			self.get_node_by_index_path(old_index_path + [old_index])
+		except BaseException as e:
+			print('index_path:', prev_index_path + [index])
+			print('error:', str(e))	 
+
+		# 搬移出資料
+		obj = self.get_node_by_index_path(old_index_path)['items'].pop(old_index)
+
+		new_index_path = data['new_index_path'][:-1]
+		new_index = data['new_index_path'][-1]
+		try:
+			self.get_node_by_index_path(new_index_path)
+		except BaseException as e:
+			print('index_path:', prev_index_path + [index])
+			print('error:', str(e))	 
+
+		# 搬移入資料
+		node = self.get_node_by_index_path(new_index_path)
+		node['items'].insert(new_index, obj)
+
+		# 整個資料重新更新
+		for index, node in enumerate(self.data):
+			self.set_descendant_index_path(node, [index])
+
+		# 將結果發布給訂閱者。
+		self.announcement()

@@ -38,6 +38,7 @@ class DocumentManagerApp:
 			'add': self.model.add,
 			'update': self.model.update,
 			'remove': self.model.remove,
+			'move': self.model.move,
 		}
 
 		for event, func in model_function.items():

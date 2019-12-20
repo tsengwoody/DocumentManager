@@ -1,5 +1,6 @@
 import wx
 from pubsub import pub
+from View.toolbar_view import fileMenuView
 from View.utility import Hotkey
 
 
@@ -16,6 +17,41 @@ class TreeView(wx.TreeCtrl, Hotkey):
 			style=wx.TR_HIDE_ROOT | wx.TR_DEFAULT_STYLE,
 		)
 
+		# 管理文件區
+		Hotkey.__init__(self)
+		self.fileMenu = fileMenuView(self)
+		self.key_map_action = [
+			{
+				'key': [wx.WXK_F2],
+				'action': self.fileMenu.onUpdate,
+			},
+			{
+				'key': [wx.WXK_SHIFT, wx.WXK_CONTROL, ord('N')],
+				'action': self.fileMenu.onAdd,
+			},
+			{
+				'key': [wx.WXK_F2],
+				'action': self.fileMenu.onUpdate,
+			},
+			{
+				'key': [wx.WXK_DELETE],
+				'action': self.fileMenu.onRemove,
+			},
+			{
+				'key': [wx.WXK_CONTROL, ord('X')],
+				'action': self.fileMenu.onCut,
+			},
+			{
+				'key': [wx.WXK_CONTROL, ord('C')],
+				'action': self.fileMenu.onCopy,
+			},
+			{
+				'key': [wx.WXK_CONTROL, ord('V')],
+				'action': self.fileMenu.onPaste,
+			},
+		]
+		self.clipboard = None
+
 		# image array
 		il = wx.ImageList(36, 36, True)
 		docBitmap = wx.Bitmap("./icons/documents.png", wx.BITMAP_TYPE_PNG)
@@ -23,7 +59,6 @@ class TreeView(wx.TreeCtrl, Hotkey):
 		self.AssignImageList(il)
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftMouseDown, self)
 		# self.Bind(wx.EVT_RIGHT_DOWN, self.onItemRightClick, self)
-		Hotkey.__init__(self, self)
 		# self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
 		# self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onSelChanged, self)
 

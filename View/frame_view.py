@@ -16,24 +16,34 @@ class FrameView(wx.Frame):
 	def menusData(self):
 		return [
 			{
-				'label': _('&File'),
+				'label': _('File'),
 				'type': 'menu',
 				'items': [
 					{
 						'id': 'open',
-						'label': _('&Open'),
+						'label': _('Open'),
 						'type': 'menuitem',
 						'action': 'onNoAction',
-						'show': ['section'],
 					},
 					{
 						'id': 'close',
-						'label': _('&Close'),
+						'label': _('Close'),
 						'type': 'menuitem',
 						'action': 'onNoAction',
-						'show': ['section'],
 					},
 				],
+			},
+			{
+				'label': _('About'),
+				'type': 'menu',
+				'items': [
+					{
+						'id': 'ContactUs',
+						'label': _('Contact Us'),
+						'type': 'menuitem',
+						'action': 'onNoAction',
+					},
+				]
 			},
 		]
 
