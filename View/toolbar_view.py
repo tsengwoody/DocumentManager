@@ -24,73 +24,73 @@ class fileMenuView(wx.Menu):
 		return [
 			{
 				'id': 'enter',
-				'label': _('Enter'),
+				'label': _('&Enter'),
 				'action': 'onEnter',
 				'show': ['section', ],
 			},
 			{
 				'id': 'edittext',
-				'label': _('Edit Text'),
+				'label': _('Edit &Text'),
 				'action': 'onNoAction',
 				'show': ['text', ],
 			},
 			{
 				'id': 'editmathml',
-				'label': _('Edit MathML'),
+				'label': _('Edit &MathML'),
 				'action': 'onNoAction',
 				'show': ['mathml', ],
 			},
 			{
 				'id': 'add',
-				'label': _('Add'),
+				'label': _('&Add'),
 				'action': 'onAdd',
-				'show': ['unselected', ],
+				'show': ['text', 'section', 'mathml', 'unselected', ],
 			},
 			{
 				'id': 'update',
-				'label': _('Update'),
+				'label': _('&Update'),
 				'action': 'onUpdate',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'remove',
-				'label': _('Delete'),
+				'label': _('&Delete'),
 				'action': 'onRemove',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'cut',
-				'label': _('Cut'),
+				'label': _('&Cut'),
 				'action': 'onCut',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'copy',
-				'label': _('Copy'),
+				'label': _('&Copy'),
 				'action': 'onCopy',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'paste',
-				'label': _('Paste'),
+				'label': _('&Paste'),
 				'action': 'onPaste',
-				'show': ['unselected', ],
+				'show': ['text', 'section', 'mathml', 'unselected', ],
 			},
 			{
 				'id': 'moveup',
-				'label': _('Move Up'),
+				'label': _('&Move Up'),
 				'action': 'onMoveUp',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'movedown',
-				'label': _('Move Down'),
+				'label': _('&Move Down'),
 				'action': 'onMoveDown',
 				'show': ['text', 'section', 'mathml', ],
 			},
 			{
 				'id': 'export',
-				'label': _('Export'),
+				'label': _('Exp&ort'),
 				'action': 'onExport',
 				'show': ['section', ],
 			},
@@ -322,6 +322,14 @@ class fileMenuView(wx.Menu):
 			dlg.ShowModal()
 			return False
 
+		if self.parent.clipboard:
+			parent = self.parent
+			caption = "清除剪貼簿"
+			message = "剪貼簿內仍有內容，繼續執行此操作將遺失該內容，是否仍繼續?"
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+			if dlg.ShowModal() == wx.ID_CANCEL:
+				return False
+
 		self.parent.clipboard = deepcopy(data)
 		pub.sendMessage("remove", data={
 			'index_path': data['index_path'],
@@ -337,10 +345,20 @@ class fileMenuView(wx.Menu):
 			dlg.ShowModal()
 			return False
 
+		print(self.parent.clipboard)
+		if self.parent.clipboard:
+			parent = self.parent
+			caption = "清除剪貼簿"
+			message = "剪貼簿內仍有內容，繼續執行此操作將遺失該內容，是否仍繼續?"
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK | wx.CANCEL | wx.ICON_QUESTION)
+			if dlg.ShowModal() == wx.ID_CANCEL:
+				return False
+
 		self.parent.clipboard = deepcopy(self.data)
 
 	def onPaste(self, event):
 		data = self.parent.clipboard
+		self.parent.clipboard = None
 		if not data:
 			parent = self.parent
 			caption = _("無法貼上")

@@ -184,18 +184,29 @@ class Model:
 			print('index_path:', previous_index_path)
 			print('error:', str(e)) 
 
-		# node底下如果沒有'items'時，將node['items']初始化。
-		if 'items' not in node:
-			node['items'] = []
-            
-		# 插入data。
-		if index == -1:
-			node['items'].append(data['data'])
+		# 左側樹選在在最頂層資料夾
+		if not node and data['data'] == 'section':
+			node = self.data
+			# 插入data。
+			if index == -1:
+				node.append(data['data'])
+			else:
+				node.insert(index + 1, data['data'])
+				for index, node in enumerate(self.data):
+					self.set_descendant_index_path(node, [index])
 		else:
-			node['items'].insert(index + 1, data['data'])
+			# node底下如果沒有'items'時，將node['items']初始化。
+			if 'items' not in node:
+				node['items'] = []
+            
+			# 插入data。
+			if index == -1:
+				node['items'].append(data['data'])
+			else:
+				node['items'].insert(index + 1, data['data'])
         
-		# 更新在node之下所有子節點的index_path：
-		self.set_descendant_index_path(node, prev_index_path)
+			# 更新在node之下所有子節點的index_path：
+			self.set_descendant_index_path(node, prev_index_path)
         
 		# 將結果發布給訂閱者。
 		self.announcement()

@@ -269,10 +269,6 @@ class FolderView(ListCtrl, Hotkey):
 		self.fileMenu = fileMenuView(self)
 		self.key_map_action = [
 			{
-				'key': [wx.WXK_F2],
-				'action': self.fileMenu.onUpdate,
-			},
-			{
 				'key': [wx.WXK_SHIFT, wx.WXK_CONTROL, ord('N')],
 				'action': self.fileMenu.onAdd,
 			},
@@ -310,6 +306,11 @@ class FolderView(ListCtrl, Hotkey):
 			},
 		]
 		self.clipboard = None
+
+	'''def update(self, event):
+		# index = event.GetId()
+		index = self.GetFirstSelected()
+		self.EditLabel(index)'''
 
 	def getList(self):
 		return self
@@ -395,11 +396,7 @@ class CurrentSectionPanel(wx.Panel):
 		return self.lst
 
 	def onDBClickItem(self, event):
-		item = event.GetItem()
-		index = item.GetId()
-		if index != wx.NOT_FOUND:
-			pyData = self.lst.GetPyData(index)
-			pub.sendMessage('set_index_path', data={'index_path': pyData['index_path'] + [-1]})
+		self.lst.fileMenu.onEnter(event)
 
 	def onSelectedItem(self, event):
 		item = event.GetItem()
