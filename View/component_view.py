@@ -320,7 +320,6 @@ class CurrentSectionPanel(wx.Panel):
 	def __init__(self, parent, data):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.current_section = data
-		self.buttons = []
 
 		# ======================================================================
 		# 我的UI創建方法
@@ -353,30 +352,24 @@ class CurrentSectionPanel(wx.Panel):
 				'content': item['content'] if 'content' in item else '',
 				'items': item['items'] if 'items' in item else [],
 			})
-			# print(self.lst.GetPyData(wxitem))
-
-		# ==============================================================
-		# SectionPanel 的按鈕們
-		# ==============================================================
-		self.button_panel = wx.Panel(self)
-		# self.createButtonBar(self.button_panel, xPos = 0)
-
-		self.bsizer_btn = wx.BoxSizer(wx.VERTICAL)
-		for btn in self.buttons:
-			self.bsizer_btn.Add(btn, proportion=1, flag=wx.EXPAND | wx.ALL, border=1)
-
-		self.button_panel.SetSizer(self.bsizer_btn)
-		self.button_panel.Fit()
 
 		self.bsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.bsizer.Add(self.lst, 1, wx.EXPAND | wx.ALL, border=5)
-		self.bsizer.Add(self.button_panel, 0, wx.EXPAND | wx.ALL)
 		self.SetSizer(self.bsizer)
 
 		self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
 		self.lst.Bind(wx.EVT_TEXT_ENTER, self.onDBClickItem)
 		self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
 		self.lst.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onDeselectedItem)
+
+		pub.subscribe(self.setData, 'current_section')
+		pub.subscribe(self.setFocusListItem, 'pointer_raw_data')
+
+	def setFocusListItem(self, data):
+		self.lst.SetFocus()
+		if data:
+			self.lst.Focus(data['index_path'][-1])
+			self.lst.Select(data['index_path'][-1])
 
 	def setData(self, data):
 		self.lst.DeleteAllItems()
@@ -391,6 +384,8 @@ class CurrentSectionPanel(wx.Panel):
 				'content': item['content'] if 'content' in item else '',
 				'items': item['items'] if 'items' in item else [],
 			})
+
+		self.lst.SetFocus()
 
 	def getList(self):
 		return self.lst
@@ -408,46 +403,18 @@ class CurrentSectionPanel(wx.Panel):
 		data = {'index_path': self.current_section['index_path'] + [-1]}
 		pub.sendMessage('set_index_path', data=data)
 
-	def buttonData(self):
-		return (
-			(("enter"), self.enterSection),
-			(("Export"), self.exportData)
-		)
-
-	def createButtonBar(self, panel, xPos=0):
-		yPos = 0
-		for eachLabel, eachHandler in self.buttonData():
-			pos = (xPos, yPos)
-			button = self.buildOneButton(panel, eachLabel, eachHandler, pos)
-			self.buttons.append(button)
-			yPos += button.GetSize().height
-
-	def buildOneButton(self, parent, label, handler, pos=(0, 0)):
-		button = wx.Button(parent, -1, label, pos)
-		button.Bind(wx.EVT_BUTTON, handler)
-		return button
-
 
 class RightTopPanel(wx.Panel):
 	def __init__(self, parent, data, pos=(200, 000), size=wx.Size(600, 200)):
 		wx.Panel.__init__(
 			self, parent, wx.ID_ANY, pos, size, style=wx.BORDER_THEME | wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND
 		)
-		self.data = data
 		self.insideItems = wx.BoxSizer(wx.HORIZONTAL)
 		self.SetBackgroundColour(wx.Colour(112, 186, 248))
 
 		self.panelItem = CurrentSectionPanel(parent=self, data=data)
 		self.insideItems.Add(self.panelItem, 1, wx.EXPAND | wx.ALL)
 		self.panelItem.SetSize(self.Size)
-
-		pub.subscribe(self.setData, 'current_section')
-
-	def setData(self, data):
-		self.panelItem.setData(data)
-		lst = self.panelItem.getList()
-		# lst.SetItemState(0, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-		lst.SetFocus()
 
 
 class RightBottomPanel(wx.Panel):

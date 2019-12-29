@@ -126,12 +126,13 @@ class Model:
 
 	def announcement(self):
 		# 將結果發布給訂閱者。
-		for event in ['sections', 
-                'current_section', 
-                'path', 
-                'pointer_raw_data', 
-                'pointer_html_data']:
-            
+		for event in [
+			'sections',
+			'current_section',
+			'path',
+			'pointer_raw_data',
+			'pointer_html_data',
+		]:            
 			try:
 				pub.sendMessage(event, data=getattr(self, event))
 			except BaseException as e:
