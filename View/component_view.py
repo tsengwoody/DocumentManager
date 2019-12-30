@@ -70,10 +70,12 @@ class SectionPanel(wx.Panel):
 class TextPanel(wx.Panel):
 	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
-		self.content = content
 		self.buttons = []
-		# self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_MULTILINE | wx.TE_READONLY | wx.EXPAND)
-		self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_READONLY | wx.EXPAND)
+		self.data = content['data']
+		self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_MULTILINE | wx.TE_READONLY | wx.EXPAND)
+		# self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_READONLY | wx.EXPAND)
+		self.contentText.SetValue(self.data['content'])
+
 		self.button_panel = wx.Panel(self)
 
 		self.createButtonBar(self.button_panel, yPos=0)
@@ -304,8 +306,24 @@ class FolderView(ListCtrl, Hotkey):
 				'key': [wx.WXK_BACK],
 				'action': self.fileMenu.onBack,
 			},
+			{
+				'key': [wx.WXK_LEFT],
+				'action': self.onKeyLeftArrow,
+			},
+			{
+				'key': [wx.WXK_RIGHT],
+				'action': self.onKeyRightArrow,
+			},
 		]
 		self.clipboard = None
+
+		self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.fileMenu.onEnter)
+		self.Bind(wx.EVT_TEXT_ENTER, self.fileMenu.onEnter)
+		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
+		self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onDeselectedItem)
+
+		pub.subscribe(self.setData, 'current_section')
+		pub.subscribe(self.setFocusListItem, 'pointer_raw_data')
 
 	'''def update(self, event):
 		# index = event.GetId()
@@ -315,11 +333,72 @@ class FolderView(ListCtrl, Hotkey):
 	def getList(self):
 		return self
 
+	def setFocusListItem(self, data):
+		self.SetFocus()
+		if data:
+			index = data['index_path'][-1]
+			if not index == -1:
+				self.SingleSelect(index)
+				self.Focus(index)
+			else:
+				self.UnSelect()
+				self.Focus(0)
+
+	def setData(self, data):
+		self.current_section = data
+		self.DeleteAllItems()
+		for item in data['data']['items']:
+			index = data['data']['items'].index(item)
+			wxitem = self.InsertItem(index, f"{item['label']}", ImageIdEnum.typeToEnum(item['type']))
+			self.SetPyData(wxitem, {
+				'index_path': item['index_path'],
+				'label': item['label'],
+				'type': item['type'],
+				'content': item['content'] if 'content' in item else '',
+				'items': item['items'] if 'items' in item else [],
+			})
+
+		self.SetFocus()
+
+	def onSelectedItem(self, event):
+		item = event.GetItem()
+		index = item.GetId()
+		data = {'index_path': self.current_section['index_path'] + [index]}
+		pub.sendMessage('set_index_path', data=data)
+
+	def onDeselectedItem(self, event):
+		data = {'index_path': self.current_section['index_path'] + [-1]}
+		pub.sendMessage('set_index_path', data=data)
+
+	def onKeyLeftArrow(self, event):
+		index = self.GetFirstSelected()
+		index = 0 if index == -1 else index
+		if index > 0:
+			index = index - 1
+			self.SingleSelect(index)
+
+	def onKeyRightArrow(self, event):
+		index = self.GetFirstSelected()
+		index = 0 if index == -1 else index
+		if index < len(self.current_section['data']['items']) - 1:
+			index = index + 1
+			self.SingleSelect(index)
+
+	def UnSelect(self):
+		for x in range(self.GetItemCount()):
+			self.Select(x, on=0)
+
+	def SingleSelect(self, index):
+		for x in range(self.GetItemCount()):
+			if x == index:
+				self.Select(x, on=1)
+			else:
+				self.Select(x, on=0)
+
 
 class CurrentSectionPanel(wx.Panel):
 	def __init__(self, parent, data):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
-		self.current_section = data
 
 		# ======================================================================
 		# 我的UI創建方法
@@ -342,8 +421,8 @@ class CurrentSectionPanel(wx.Panel):
 		# 將剛剛的圖片陣列放入 左邊的 ListCtrl 中，這樣新增 item 時就可以直接說我要加入第幾種圖片就可以了
 		self.lst.AssignImageList(il, wx.IMAGE_LIST_NORMAL)
 
-		for item in self.current_section['data']['items']:
-			index = self.current_section['data']['items'].index(item)
+		for item in data['data']['items']:
+			index = data['data']['items'].index(item)
 			wxitem = self.lst.InsertItem(index, f"{item['label']}", ImageIdEnum.typeToEnum(item['type']))
 			self.lst.SetPyData(wxitem, {
 				'index_path': item['index_path'],
@@ -352,56 +431,12 @@ class CurrentSectionPanel(wx.Panel):
 				'content': item['content'] if 'content' in item else '',
 				'items': item['items'] if 'items' in item else [],
 			})
+
+		self.lst.current_section = data
 
 		self.bsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.bsizer.Add(self.lst, 1, wx.EXPAND | wx.ALL, border=5)
 		self.SetSizer(self.bsizer)
-
-		self.lst.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onDBClickItem)
-		self.lst.Bind(wx.EVT_TEXT_ENTER, self.onDBClickItem)
-		self.lst.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onSelectedItem)
-		self.lst.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onDeselectedItem)
-
-		pub.subscribe(self.setData, 'current_section')
-		pub.subscribe(self.setFocusListItem, 'pointer_raw_data')
-
-	def setFocusListItem(self, data):
-		self.lst.SetFocus()
-		if data:
-			self.lst.Focus(data['index_path'][-1])
-			self.lst.Select(data['index_path'][-1])
-
-	def setData(self, data):
-		self.lst.DeleteAllItems()
-		self.current_section = data
-		for item in self.current_section['data']['items']:
-			index = self.current_section['data']['items'].index(item)
-			wxitem = self.lst.InsertItem(index, f"{item['label']}", ImageIdEnum.typeToEnum(item['type']))
-			self.lst.SetPyData(wxitem, {
-				'index_path': item['index_path'],
-				'label': item['label'],
-				'type': item['type'],
-				'content': item['content'] if 'content' in item else '',
-				'items': item['items'] if 'items' in item else [],
-			})
-
-		self.lst.SetFocus()
-
-	def getList(self):
-		return self.lst
-
-	def onDBClickItem(self, event):
-		self.lst.fileMenu.onEnter(event)
-
-	def onSelectedItem(self, event):
-		item = event.GetItem()
-		index = item.GetId()
-		data = {'index_path': self.current_section['index_path'] + [index]}
-		pub.sendMessage('set_index_path', data=data)
-
-	def onDeselectedItem(self, event):
-		data = {'index_path': self.current_section['index_path'] + [-1]}
-		pub.sendMessage('set_index_path', data=data)
 
 
 class RightTopPanel(wx.Panel):

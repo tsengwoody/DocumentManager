@@ -109,7 +109,7 @@ class fileMenuView(wx.Menu):
 			if hasattr(self.parent, 'Select'):
 				self.parent.Select(index)
 				rect = self.parent.GetItemRect(index)
-				pos = wx.Point(rect.Left+rect.Width/2, rect.Top+rect.Height/2)
+				pos = wx.Point(rect.Left + rect.Width / 2, rect.Top + rect.Height / 2)
 
 		self.setMenuItem()
 		if self.Window is None:
@@ -196,7 +196,7 @@ class fileMenuView(wx.Menu):
 		) as fileDialog:
 
 			if fileDialog.ShowModal() == wx.ID_CANCEL:
-				return False #  the user changed their mind
+				return False  # the user changed their mind
 
 			# save the current contents in the file
 			pathname = fileDialog.GetPath()
@@ -295,6 +295,8 @@ class fileMenuView(wx.Menu):
 			'old_index_path': old_index_path,
 			'new_index_path': new_index_path,
 		})
+		index_path = new_index_path
+		pub.sendMessage('set_index_path', data={'index_path': index_path})
 
 	def onMoveDown(self, event):
 		data = self.data
@@ -311,6 +313,8 @@ class fileMenuView(wx.Menu):
 			'old_index_path': old_index_path,
 			'new_index_path': new_index_path,
 		})
+		index_path = new_index_path
+		pub.sendMessage('set_index_path', data={'index_path': index_path})
 
 	def onCut(self, event):
 		data = self.data
