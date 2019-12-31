@@ -115,7 +115,6 @@ class TreeView(wx.TreeCtrl, Hotkey):
 			if selection:
 				self.SelectItem(selection)
 				self.EnsureVisible(selection)
-				print(self.GetItemData(selection)['label'])
 				break
 			item = self.GetNextSibling(item)
 

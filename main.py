@@ -5,7 +5,7 @@ from pubsub import pub
 from pubsub.utils.notification import useNotifyByWriteFile
 import sys
 
-useNotifyByWriteFile(sys.stdout)
+# useNotifyByWriteFile(sys.stdout)
 
 from Model.model import Model
 from View.view import View
@@ -30,11 +30,11 @@ class DocumentManagerApp:
 	def __init__(self):
 		self.model = Model()
 		self.view = View(self.model)
-		self.model.set_index_path({'index_path': [0, -1]})
 
 		# subscribe for model
 		model_function = {
 			'set_index_path': self.model.set_index_path,
+			'append': self.model.append,
 			'add': self.model.add,
 			'update': self.model.update,
 			'remove': self.model.remove,
@@ -45,18 +45,20 @@ class DocumentManagerApp:
 			pub.subscribe(func, event)
 
 		# subscribe for view
-		view_function = {
+		'''view_function = {
 			'current_section': decorate_event('current_section')(show),
 			'sections': decorate_event('sections')(show),
 			'path': decorate_event('path')(show),
 			'pointer_raw_data': decorate_event('pointer_raw_data')(show),
 			'pointer_html_data': decorate_event('pointer_html_data')(show),
-		}
+		}'''
+		view_function = {}
 
 		for event, func in view_function.items():
 			pub.subscribe(func, event)
 
-		pub.sendMessage('set_index_path', data={'index_path': [0, -1]})
+		self.model.announcement()
+		# pub.sendMessage('set_index_path', data={'index_path': [0, -1]})
 
 if __name__ == "__main__":
 	app = wx.App()

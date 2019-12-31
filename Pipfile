@@ -10,6 +10,8 @@ flake8-tabs = "*"
 [packages]
 wxpython = "*"
 pypubsub = "*"
+asciimathml = "*"
+latex2mathml = "*"
 
 [requires]
 python_version = "3.7"

@@ -17,11 +17,49 @@ class HtmlPanel(wx.Panel):
 		self.SetSizer(sizer)
 
 
-class SectionPanel(wx.Panel):
+class ButtonPanel:
+	def buttonData(self):
+		return []
+
+	def createButtonPanel(self, orientation):
+		self.buttons = []
+		button_panel = self.createButtonBar(0, orientation)
+		button_sizer = wx.BoxSizer(getattr(wx, orientation))
+		for button in self.buttons:
+			button_sizer.Add(button, 1, wx.EXPAND | wx.ALL, border=1)
+
+		button_panel.SetSizer(button_sizer)
+		button_panel.Fit()
+		return button_panel
+
+	def createButtonBar(self, sPos, orientation):
+		panel = wx.Panel(self)
+		dPos = 0
+		if orientation == 'HORIZONTAL':
+			for item in self.buttonsData:
+				pos = (dPos, sPos)
+				button = self.buildOneButton(panel, label=item['label'], pos=pos, action=item['action'])
+				self.buttons.append(button)
+				dPos += button.GetSize().width
+		elif orientation == 'VERTICAL':
+			for item in self.buttonsData:
+				pos = (sPos, dPos)
+				button = self.buildOneButton(panel, label=item['label'], pos=pos, action=item['action'])
+			self.buttons.append(button)
+			dPos += button.GetSize().height
+
+		return panel
+
+	def buildOneButton(self, parent, label, pos, action):
+		button = wx.Button(parent, -1, label=label, pos=pos)
+		button.Bind(wx.EVT_BUTTON, action)
+		return button
+
+
+class SectionPanel(wx.Panel, ButtonPanel):
 	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.content = content
-		self.buttons = []
 
 		# ======================================================================
 		# 我的UI創建方法
@@ -50,55 +88,70 @@ class SectionPanel(wx.Panel):
 		# ==============================================================
 		# SectionPanel 的按鈕們
 		# ==============================================================
-		self.button_panel = wx.Panel(self)
-		# self.createButtonBar(self.button_panel, xPos = 0)
 
-		self.bsizer_btn = wx.BoxSizer(wx.VERTICAL)
-		for btn in self.buttons:
-			self.bsizer_btn.Add(btn, proportion=1, flag=wx.EXPAND | wx.ALL, border=1)
-
-		self.button_panel.SetSizer(self.bsizer_btn)
-		self.button_panel.Fit()
-
-		self.bsizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.button_panel = self.createButtonPanel(orientation='HORIZONTAL')
+		self.bsizer = wx.BoxSizer(wx.VERTICAL)
 		self.bsizer.Add(self.lst, 1, wx.EXPAND | wx.ALL, border=5)
 		self.bsizer.Add(self.button_panel, 0, wx.EXPAND | wx.ALL)
-
 		self.SetSizer(self.bsizer)
 
+	@property
+	def buttonsData(self):
+		return [
+			{
+				'id': 'enter',
+				'label': _('Enter'),
+				'type': 'button',
+				'action': self.onEnter,
+			},
+			{
+				'id': 'export',
+				'label': _('Export'),
+				'type': 'button',
+				'action': self.onExport,
+			},
+		]
 
-class TextPanel(wx.Panel):
+	def onEnter(self, event):
+		print('on enter')
+
+	def onExport(self, event):
+		print('on export')
+
+
+class TextPanel(wx.Panel, ButtonPanel):
 	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
-		self.buttons = []
 		self.data = content['data']
 		self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_MULTILINE | wx.TE_READONLY | wx.EXPAND)
 		# self.contentText = wx.TextCtrl(self, -1, size=(300, 300), style=wx.TE_READONLY | wx.EXPAND)
 		self.contentText.SetValue(self.data['content'])
 
-		self.button_panel = wx.Panel(self)
 
-		self.createButtonBar(self.button_panel, yPos=0)
-
-		self.bsizer_btn = wx.BoxSizer(wx.HORIZONTAL)
-		for btn in self.buttons:
-			self.bsizer_btn.Add(btn, 1, wx.EXPAND | wx.ALL, border=1)
-
-		self.button_panel.SetSizer(self.bsizer_btn)
-		self.button_panel.Fit()
+		self.button_panel = self.createButtonPanel(orientation='HORIZONTAL')
 		self.bsizer = wx.BoxSizer(wx.VERTICAL)
 		self.bsizer.Add(self.contentText, 1, wx.EXPAND | wx.ALL, border=5)
 		self.bsizer.Add(self.button_panel, 0, wx.EXPAND | wx.ALL)
-
 		self.SetSizer(self.bsizer)
 
-	def onPanelActivated(self):
-		self.Show()
+	@property
+	def buttonsData(self):
+		return [
+			{
+				'id': 'edit',
+				'label': _('Edit'),
+				'type': 'button',
+				'action': self.onEdit,
+			},
+			{
+				'id': 'export',
+				'label': _('Export'),
+				'type': 'button',
+				'action': self.onExport,
+			},
+		]
 
-	def onPanelDeactivated(self):
-		self.Hide()
-
-	def OnRewrite(self, evt):
+	def onEdit(self, event):
 		# from xml.etree.ElementTree import tostring
 		# import asciimathml
 
@@ -109,55 +162,42 @@ class TextPanel(wx.Panel):
 			textValue = entryDialog.GetValue()
 			self.content = textValue
 
-	def OnExport(self, event):
-		pass
-
-	def buttonData(self):
-		return (
-			(("Rewrite"), self.OnRewrite),
-			(("Export"), self.OnExport)
-		)
-
-	def createButtonBar(self, panel, yPos=0):
-		xPos = 0
-		for eachLabel, eachHandler in self.buttonData():
-			pos = (xPos, yPos)
-			button = self.buildOneButton(panel, eachLabel, eachHandler, pos)
-			self.buttons.append(button)
-			xPos += button.GetSize().width
-
-	def buildOneButton(self, parent, label, handler, pos=(0, 0)):
-		button = wx.Button(parent, -1, label, pos)
-		self.Bind(wx.EVT_BUTTON, handler, button)
-		return button
+	def onExport(self, event):
+		print('on export')
 
 
-class MathmlPanel(wx.Panel):
+class MathmlPanel(wx.Panel, ButtonPanel):
 	def __init__(self, parent, content):
 		wx.Panel.__init__(self, parent, wx.ID_ANY, (0, 0), (0, 0))
 		self.html_panel = HtmlPanel(parent=self, content=content['data'])
 		self.content = content
-		self.buttons = []
 		# self.treeArea = wx.TreeCtrl(
 		# self, id=-1, pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.EXPAND
 		# )
 		# self.MathmlToTree()
 
-		self.button_panel = wx.Panel(self)
-		self.createButtonBar(self.button_panel, xPos=0)
-
-		self.bsizer_btn = wx.BoxSizer(wx.VERTICAL)
-		for btn in self.buttons:
-			self.bsizer_btn.Add(btn, 1, wx.EXPAND | wx.ALL, border=1)
-
-		self.button_panel.SetSizer(self.bsizer_btn)
-		self.button_panel.Fit()
-
+		self.button_panel = self.createButtonPanel(orientation='VERTICAL')
 		self.bsizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.bsizer.Add(self.html_panel, 1, wx.EXPAND | wx.ALL, border=5)
 		self.bsizer.Add(self.button_panel, 0, wx.EXPAND | wx.ALL)
-
 		self.SetSizer(self.bsizer)
+
+	@property
+	def buttonsData(self):
+		return [
+			{
+				'id': 'edit',
+				'label': _('Edit'),
+				'type': 'button',
+				'action': self.onEdit,
+			},
+			{
+				'id': 'interaction',
+				'label': _('Interaction'),
+				'type': 'button',
+				'action': self.onInteraction,
+			},
+		]
 
 	def MathmlToTree(self):
 		if self.content:
@@ -179,13 +219,7 @@ class MathmlPanel(wx.Panel):
 				)
 				self._recursive(child, childId)
 
-	def onPanelActivated(self):
-		self.Show()
-
-	def onPanelDeactivated(self):
-		self.Hide()
-
-	def OnRewrite(self, evt):
+	def onEdit(self, event):
 		from xml.etree.ElementTree import tostring
 		import asciimathml
 		entryDialog = wx.TextEntryDialog(
@@ -196,33 +230,13 @@ class MathmlPanel(wx.Panel):
 			mathMl = tostring(asciimathml.parse(asciimath))
 			self.content = mathMl
 
-	def OnInteraction(self, evt):
+	def onInteraction(self, evt):
 		pass
 
 	def OnRawdataToClip(self, evt):
 		if wx.TheClipboard.Open():
 			wx.TheClipboard.SetData(wx.TextDataObject(self.content))
 			wx.TheClipboard.Close()
-
-	def buttonData(self):
-		return (
-			(("Rewrite"), self.OnRewrite),
-			(("Interaction"), self.OnInteraction),
-			(("Copy"), self.OnRawdataToClip),
-		)
-
-	def createButtonBar(self, panel, xPos=0):
-		yPos = 0
-		for eachLabel, eachHandler in self.buttonData():
-			pos = (xPos, yPos)
-			button = self.buildOneButton(panel, eachLabel, eachHandler, pos)
-			self.buttons.append(button)
-			yPos += button.GetSize().height
-
-	def buildOneButton(self, parent, label, handler, pos=(0, 0)):
-		button = wx.Button(parent, -1, label, pos)
-		self.Bind(wx.EVT_BUTTON, handler, button)
-		return button
 
 
 class ListCtrl(wx.ListCtrl):
@@ -457,15 +471,40 @@ class RightBottomPanel(wx.Panel):
 		wx.Panel.__init__(
 			self, parent, wx.ID_ANY, pos, size, style=wx.BORDER_THEME | wx.ALIGN_CENTER_HORIZONTAL | wx.EXPAND
 		)
-		self.data = data
+		self.current_section_index_path = None
+		self.current_section_data = None
+		self.pointer_index_path = None
+		self.pointer_data = None
 		self.insideItems = wx.BoxSizer(wx.HORIZONTAL)
 		self.SetBackgroundColour(wx.Colour(112, 186, 248))
 		pub.subscribe(self.setData, 'pointer_raw_data')
-		self.setData(self.data)
+		pub.subscribe(self.setCurrentSection, 'current_section')
 
 	def setData(self, data):
-		if not data:
-			return False
+		if data:
+			self.pointer_index_path = data['index_path']
+			self.pointer_data = data['data']
+		else:
+			self.pointer_index_path = None
+			self.pointer_data = None
+		self.setPanel()
+
+	def setCurrentSection(self, data):
+		self.current_section_index_path = data['index_path']
+		self.current_section_data = data['data']
+		self.setPanel()
+
+	def setPanel(self):
+		if self.pointer_index_path and self.pointer_data:
+			data = {
+				'index_path': self.pointer_index_path,
+				'data': self.pointer_data,
+			}
+		else:
+			data = {
+				'index_path': self.current_section_index_path,
+				'data': self.current_section_data,
+			}
 		try:
 			self.panelItem.Destroy()
 		except AttributeError:

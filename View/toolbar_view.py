@@ -117,6 +117,7 @@ class fileMenuView(wx.Menu):
 
 	def setCurrentSection(self, data):
 		self.index_path = data['index_path']
+		self.current_section = data['data']
 
 	def setMenuItem(self):
 		for item in self.menus.values():
@@ -136,7 +137,6 @@ class fileMenuView(wx.Menu):
 	def data(self):
 		if hasattr(self.parent, 'getList'):
 			lst = self.parent.getList()
-			# item = lst.GetFocusedItem()
 			item = lst.GetFirstSelected()
 			if item < 0:
 				data = None
@@ -169,14 +169,12 @@ class fileMenuView(wx.Menu):
 			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
 			dlg.ShowModal()
 			return False
-		print(data['index_path'])
 		pub.sendMessage('set_index_path', data={
 			'index_path': data['index_path'] + [-1],
 		})
 
 	def onBack(self, event):
-		data = self.data
-		if len(data['index_path'][:-1]) <= 1:
+		if len(self.index_path) <= 1:
 			parent = self.parent
 			caption = _("無法返回")
 			message = _("已在最頂層資料夾，無法返回上一層")
@@ -184,7 +182,7 @@ class fileMenuView(wx.Menu):
 			dlg.ShowModal()
 			return False
 		pub.sendMessage('set_index_path', data={
-			'index_path': data['index_path'][:-2] + [-1]
+			'index_path': self.index_path[:-1] + [-1]
 		})
 
 	def onExport(self, event):
@@ -277,15 +275,15 @@ class fileMenuView(wx.Menu):
 		data = self.data
 		if not data:
 			parent = self.parent
-			caption = "無法移動"
-			message = "無選定項目，無法進行移動"
+			caption = _("無法移動")
+			message = _("無選定項目，無法進行移動")
 			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
 			dlg.ShowModal()
 			return False
 		if data['index_path'][-1] == 0:
 			parent = self.parent
-			caption = "無法移動"
-			message = "選定項目已在最前面，無法進行移動"
+			caption = _("無法移動")
+			message = _("選定項目已在最前項，無法進行移動")
 			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
 			dlg.ShowModal()
 			return False
@@ -302,8 +300,15 @@ class fileMenuView(wx.Menu):
 		data = self.data
 		if not data:
 			parent = self.parent
-			caption = "無法移動"
-			message = "無選定項目，無法進行移動"
+			caption = _("無法移動")
+			message = _("無選定項目，無法進行移動")
+			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
+			dlg.ShowModal()
+			return False
+		if data['index_path'][-1] >= len(self.current_section['items']) - 1:
+			parent = self.parent
+			caption = _("無法移動")
+			message = _("選定項目已在最後項，無法進行移動")
 			dlg = wx.MessageDialog(parent, message, caption, wx.OK)
 			dlg.ShowModal()
 			return False
@@ -349,7 +354,6 @@ class fileMenuView(wx.Menu):
 			dlg.ShowModal()
 			return False
 
-		print(self.parent.clipboard)
 		if self.parent.clipboard:
 			parent = self.parent
 			caption = "清除剪貼簿"

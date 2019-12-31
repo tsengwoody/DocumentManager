@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timedelta
 import wx
 
 
@@ -12,12 +14,15 @@ class Hotkey(object):
 
 	def onKeyDown(self, event):
 		keycode = event.GetKeyCode()
-		# print(keycode)
+		if self.key_down == set():
+			self.timestamp = datetime.now()
+		if datetime.now() - self.timestamp > timedelta(0, 10, 0):
+			self.key_down.clear()
+
 		self.key_down.add(keycode)
 		m = False
 		for item in self.key_map_action:
 			if self.key_down == set(item['key']):
-				self.key_down.clear()
 				m = True
 				item['action'](event)
 				break

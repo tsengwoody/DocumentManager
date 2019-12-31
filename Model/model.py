@@ -1,4 +1,5 @@
-﻿from fakedata import documents
+﻿import json
+from fakedata import documents
 from enums import PanelType, ActionType
 from pubsub import pub
 
@@ -14,11 +15,14 @@ class Model:
 	"""
 
 	def __init__(self):
-		self.data = documents
+		# data = documents
+		# json.dump(data, open(path, "w"))
+		data = json.load(open('save.json'))
+		self.data = data
 
 		# index_path 放入逐層的索引項來指到特定物件
 		# 最後一項代表選取項目，可為 -1 代表無選取項目
-		self.index_path = [0, 0, 1]
+		self.index_path = [0, -1]
 
 		for index, node in enumerate(self.data):
 			self.set_descendant_index_path(node, [index])
@@ -59,6 +63,19 @@ class Model:
 			'index_path': node['index_path'],
 			'label': node['label'],
 			'items': child_sections,
+		}
+
+	@property
+	def root_section(self):
+		"""
+			return: {
+				'index_path': [0,1,1],
+				'data': {...}, # 當前資料夾的資料，需含 index_path
+			}
+		"""
+		return {
+			'index_path': self.index_path[:1],
+			'data': self.get_node_by_index_path(self.index_path[:1]),
 		}
 
 	@property
@@ -128,11 +145,12 @@ class Model:
 		# 將結果發布給訂閱者。
 		for event in [
 			'sections',
+			'root_section',
 			'current_section',
 			'path',
 			'pointer_raw_data',
 			'pointer_html_data',
-		]:            
+		]:
 			try:
 				pub.sendMessage(event, data=getattr(self, event))
 			except BaseException as e:
@@ -149,6 +167,12 @@ class Model:
 		"""
 		old_index_path = self.index_path
 		self.index_path = data['index_path']
+		if not self.index_path[0] == old_index_path[0]:
+			try:
+				pub.sendMessage('root_section', data=getattr(self, 'root_section'))
+			except BaseException as e:
+				print('root_section')
+				print('error:', str(e))
 		if not self.index_path[:-1] == old_index_path[:-1]:
 			try:
 				pub.sendMessage('current_section', data=getattr(self, 'current_section'))
@@ -163,6 +187,11 @@ class Model:
 				print(event)
 				print('error:', str(e))
 
+	def append(self, data):
+		self.data.append(data)
+		self.set_descendant_index_path(self.data[-1], [len(self.data) - 1])
+		self.announcement()
+
 	def add(self, data):
 		"""
 			資料格式：data: {
@@ -170,13 +199,11 @@ class Model:
 				'data': {...}, # 要放入的資料
 			}
 			判斷：如果 index_path 除最後一個外有不存在的 index 則 raise exception
-            
 			筆記：
 			index_path=[0,0,-1]時，在index_path=[0,0]的地方加入data；
 			index_path=[0,0,1] 時，在index_path=[0,0,2]的地方加入data。
 		"""
 		# print(data['index_path'], data['data']['label']) #for test purpose only
-        
 		prev_index_path = data['index_path'][:-1]
 		index = data['index_path'][-1] #index是index_path的最後一個數字
 		try:
@@ -199,20 +226,19 @@ class Model:
 			# node底下如果沒有'items'時，將node['items']初始化。
 			if 'items' not in node:
 				node['items'] = []
-            
+
 			# 插入data。
 			if index == -1:
 				node['items'].append(data['data'])
 			else:
 				node['items'].insert(index + 1, data['data'])
-        
+
 			# 更新在node之下所有子節點的index_path：
 			self.set_descendant_index_path(node, prev_index_path)
-        
+
 		# 將結果發布給訂閱者。
 		self.announcement()
 
-            
 	def update(self, data):
 		"""
 			data: {
@@ -233,22 +259,23 @@ class Model:
 				'index_path': [0,1,1], # 要刪除的位置
 			}
 			判斷：如果 index_path 有不存在的 index 則 raise exception
-		"""        
+		"""
+
 		prev_index_path = data['index_path'][:-1]
 		index = data['index_path'][-1] #index是index_path的最後一個數字
 		try:
 			self.get_node_by_index_path(prev_index_path + [index])
 		except BaseException as e:
 			print('index_path:', prev_index_path + [index])
-			print('error:', str(e))     
+			print('error:', str(e))
 		node = self.get_node_by_index_path(prev_index_path)
-        
-        # 刪除資料
+
+		# 刪除資料
 		node['items'].pop(index)
-        
+
 		# 更新在node之下所有子節點的index_path：
 		self.set_descendant_index_path(node, prev_index_path)
-        
+
 		# 將結果發布給訂閱者。
 		self.announcement()
 

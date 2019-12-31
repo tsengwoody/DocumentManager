@@ -1,4 +1,6 @@
+﻿import json
 import wx
+from pubsub import pub
 
 
 class FrameView(wx.Frame):
@@ -8,6 +10,8 @@ class FrameView(wx.Frame):
 		self.SetMinSize(size)
 		self.SetSize(size)
 		self.SetMenuBar(self.createMenuBar())
+
+		pub.subscribe(self.setRootSection, 'root_section')
 
 	def show(self, isShow=True):
 		self.Show(isShow)
@@ -20,16 +24,34 @@ class FrameView(wx.Frame):
 				'type': 'menu',
 				'items': [
 					{
-						'id': 'open',
-						'label': _('Open'),
+						'id': 'new',
+						'label': _('&New'),
 						'type': 'menuitem',
-						'action': 'onNoAction',
+						'action': 'onNew',
 					},
 					{
-						'id': 'close',
-						'label': _('Close'),
+						'id': 'open',
+						'label': _('&Open'),
 						'type': 'menuitem',
-						'action': 'onNoAction',
+						'action': 'onOpen',
+					},
+					{
+						'id': 'save',
+						'label': _('&Save'),
+						'type': 'menuitem',
+						'action': 'onSave',
+					},
+					{
+						'id': 'export',
+						'label': _('&Export'),
+						'type': 'menuitem',
+						'action': 'onExport',
+					},
+					{
+						'id': 'exit',
+						'label': _('E&xit'),
+						'type': 'menuitem',
+						'action': 'onExit',
 					},
 				],
 			},
@@ -64,29 +86,60 @@ class FrameView(wx.Frame):
 				subMenu = self.createMenu(item['items'])
 				menu.AppendMenu(wx.NewId(), label, subMenu)
 			else:
-				menu.Append(wx.ID_ANY, item['label'])
-				# menu.Bind(wx.EVT_MENU, getattr(self, item['action']), self.menus[item['id']])
-
-		'''for eachItem in menuData:
-			if len(eachItem) == 2:
-				label = eachItem[0]
-				subMenu = self.createMenu(eachItem[1])
-				menu.AppendMenu(wx.NewId(), label, subMenu)
-
-			else:
-				self.createMenuItem(menu, *eachItem)'''
+				menuitem = menu.Append(wx.ID_ANY, item['label'])
+				menu.Bind(wx.EVT_MENU, getattr(self, item['action']), menuitem)
 
 		return menu
-
-	def createMenuItem(self, menu, label, status, handler, kind=wx.ITEM_NORMAL):
-		if not label:
-			menu.AppendSeparator()
-			return
-		menuItem = menu.Append(-1, label, status, kind)
-		self.Bind(wx.EVT_MENU, handler, menuItem)
 
 	def setMenuBar(self, fileMenu):
 		self.fileMenu = fileMenu
 		self.menubar = wx.MenuBar()
 		self.menubar.Append(self.fileMenu, 'Add')
 		self.SetMenuBar(self.menubar)
+
+	def setRootSection(self, data):
+		self.root_index = data['index_path'][0]
+		self.root_section = data['data']
+
+	def onNoAction(self, event):
+		pass
+
+	def onNew(self, event):
+		pub.sendMessage('append', data={
+			'label': '新文件',
+			'type': 'section',
+			'items': [],
+		})
+
+	def onOpen(self, event):
+		with wx.FileDialog(
+			self, message=_("Open file..."), defaultDir='',
+			wildcard="json files (*.json) | *.json",
+		) as dialog:
+			if dialog.ShowModal() != wx.ID_OK:
+				return
+			path = dialog.GetPath()
+		data = json.load(open(path))
+		pub.sendMessage('append', data=data)
+
+	def onSave(self, event):
+		with wx.FileDialog(
+			self, message=_("Save file..."), defaultDir='', defaultFile="DocumentManagerProject.json",
+			wildcard="json files (*.json) | *.json", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+		) as dialog:
+			if dialog.ShowModal() != wx.ID_OK:
+				return
+			path = dialog.GetPath()
+		json.dump(self.root_section, open(path, "w"))
+
+	def onExport(self, event):
+		with wx.FileDialog(
+			self, message=_("Save file..."), defaultDir='', defaultFile="DocumentManagerProject.json",
+			wildcard="json files (*.json) | *.json", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+		) as dialog:
+			if dialog.ShowModal() != wx.ID_OK:
+				return
+			path = dialog.GetPath()
+
+	def onExit(self, event):
+		self.Close()
