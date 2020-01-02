@@ -1,0 +1,6 @@
+1. 安裝以下3款函式庫
+1-1. pip install latex2mathml
+1-2. pip install asciimathml
+1-3. pip install lxml
+
+筆記：latex2mathml的參數一定要使用raw string的形式，例如：r"\frac"，才不會轉換時出錯。
